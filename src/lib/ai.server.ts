@@ -1,7 +1,11 @@
-const GATEWAY = "https://api.openai.com/v1/chat/completions";
+// OpenAI-compatible gateway. The hackathon credits key is issued by
+// openai-next.com, not api.openai.com, so keep the base URL configurable.
+const AI_BASE_URL =
+  process.env["OPENAI_BASE_URL"] ?? "https://api.openai-next.com/v1";
+const GATEWAY = `${AI_BASE_URL.replace(/\/$/, "")}/chat/completions`;
 
-export const AI_MODEL_FAST = "gpt-4o-mini";
-export const AI_MODEL_DEEP = "gpt-4o";
+export const AI_MODEL_FAST = process.env["OPENAI_MODEL_FAST"] ?? "gpt-4o-mini";
+export const AI_MODEL_DEEP = process.env["OPENAI_MODEL_DEEP"] ?? "gpt-4o";
 
 export class AiError extends Error {
   status: number;
@@ -20,7 +24,7 @@ function friendly(status: number, message: string): string {
 }
 
 /**
- * Structured JSON call against the OpenAI-compatible gateway.
+ * Structured JSON call against an OpenAI-compatible gateway.
  * Server-only: reads OPENAI_API_KEY at call time.
  */
 export async function aiJson<T>(opts: {

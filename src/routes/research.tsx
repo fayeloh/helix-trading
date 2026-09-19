@@ -64,10 +64,10 @@ function ResearchPage() {
   const fetchFn = useServerFn(getResearchSection);
 
   const run = useMutation({
-    mutationFn: async (vars: { section: ResearchSection; force: boolean }) =>
+    mutationFn: async (vars: { symbol: string; section: ResearchSection; force: boolean }) =>
       (await fetchFn({
         data: {
-          symbol,
+          symbol: vars.symbol,
           market,
           section: vars.section,
           lookbackDays: lookback,
@@ -76,7 +76,7 @@ function ResearchPage() {
         },
       })) as Row,
     onSuccess: (row, vars) => {
-      setResults((p) => ({ ...p, [`${symbol}:${vars.section}:${lookback}:${lang}`]: row }));
+      setResults((p) => ({ ...p, [`${vars.symbol}:${vars.section}:${lookback}:${lang}`]: row }));
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "生成失败"),
   });
@@ -88,7 +88,7 @@ function ResearchPage() {
     if (!s) return;
     setSymbol(s);
     setResults({});
-    setTimeout(() => run.mutate({ section, force: false }), 0);
+    run.mutate({ symbol: s, section, force: false });
   };
 
   return (
@@ -174,7 +174,7 @@ function ResearchPage() {
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => run.mutate({ section, force: false })}
+                  onClick={() => run.mutate({ symbol, section, force: false })}
                   disabled={run.isPending}
                 >
                   <Sparkles className="mr-1 size-3.5" />
@@ -183,7 +183,7 @@ function ResearchPage() {
                 <Button
                   size="sm"
                   variant="ghost"
-                  onClick={() => run.mutate({ section, force: true })}
+                  onClick={() => run.mutate({ symbol, section, force: true })}
                   disabled={run.isPending}
                 >
                   {t("research.recompute")}

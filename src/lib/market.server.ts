@@ -18,23 +18,33 @@ export type SeriesResult = {
 };
 
 export async function readCache<T>(key: string): Promise<T | null> {
-  const { data } = await supabaseAdmin
-    .from("market_cache")
-    .select("payload, expires_at")
-    .eq("cache_key", key)
-    .maybeSingle();
-  if (!data) return null;
-  if (new Date(data.expires_at).getTime() < Date.now()) return null;
-  return data.payload as T;
+  // 缓存是性能优化，不应成为外部数据源的硬依赖。
+  // 本地开发或未配置 service-role key 时直接跳过缓存，继续请求实时源。
+  try {
+    const { data } = await supabaseAdmin
+      .from("market_cache")
+      .select("payload, expires_at")
+      .eq("cache_key", key)
+      .maybeSingle();
+    if (!data) return null;
+    if (new Date(data.expires_at).getTime() < Date.now()) return null;
+    return data.payload as T;
+  } catch {
+    return null;
+  }
 }
 
 export async function writeCache(key: string, payload: unknown, ttlSeconds: number) {
-  await supabaseAdmin.from("market_cache").upsert({
-    cache_key: key,
-    payload: payload as never,
-    fetched_at: new Date().toISOString(),
-    expires_at: new Date(Date.now() + ttlSeconds * 1000).toISOString(),
-  });
+  try {
+    await supabaseAdmin.from("market_cache").upsert({
+      cache_key: key,
+      payload: payload as never,
+      fetched_at: new Date().toISOString(),
+      expires_at: new Date(Date.now() + ttlSeconds * 1000).toISOString(),
+    });
+  } catch {
+    // 缓存写入失败不影响实时数据返回。
+  }
 }
 
 /** Yahoo Finance chart endpoint — free, no API key [默认方案，可调整] */
