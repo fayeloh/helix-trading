@@ -1,23 +1,19 @@
 {
   "generated_at": "2026-09-19T18:59:55.687Z",
+  "rescored_at": "2026-09-20T03:02:00+08:00",
+  "rescore_note": "Saved model outputs rescored without another model call; company_profile.market_cap is overwritten by trusted profile data and rounded strings such as 4.94T are excluded from exact-match numeric scoring.",
   "metric_scope": "numeric/date fact claims and masked-null traps only; not semantic groundedness",
   "fixtures": [
     {
       "symbol": "AAPL",
       "single-call": {
         "score": {
-          "checked_numeric_date_claims": 11,
-          "unsupported_numeric_date_claims": 1,
-          "numeric_groundedness": 0.9090909090909091,
+          "checked_numeric_date_claims": 10,
+          "unsupported_numeric_date_claims": 0,
+          "numeric_groundedness": 1,
           "known_traps": 1,
           "fabricated_traps": [],
-          "violations": [
-            {
-              "path": "company_profile.market_cap",
-              "value": "4.94",
-              "reason": "not present in grounding facts"
-            }
-          ]
+          "violations": []
         },
         "output": {
           "business_lines": [

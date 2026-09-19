@@ -174,4 +174,12 @@ describe("verifyAgainstFacts", () => {
     );
     expect(result).toEqual({ passed: true, checked_values: 0, violations: [] });
   });
+
+  it("does not flag a rounded market cap that the trusted profile overwrites", () => {
+    const result = verifyAgainstFacts(
+      { company_profile: { kind: "fact", market_cap: "4.94T" } },
+      { verifiedProfile: { marketCap: 4936860972280 } },
+    );
+    expect(result).toEqual({ passed: true, checked_values: 0, violations: [] });
+  });
 });

@@ -155,6 +155,12 @@ function Dashboard() {
             <CardContent className="space-y-2 text-sm text-muted-foreground">
               <p>指数行情来自多源免费数据，页面会自动刷新。</p>
               <p>宏观简报按交易日生成，点击下方入口查看完整事件与影响分析。</p>
+              <Button asChild size="sm" variant="ghost" className="-ml-3 mt-1">
+                <Link to="/briefing">
+                  查看完整事件与影响分析{" "}
+                  <ArrowRight className="ml-1 size-3.5" />
+                </Link>
+              </Button>
             </CardContent>
           </Card>
         </div>

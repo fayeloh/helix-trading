@@ -22,11 +22,14 @@ MVP 闭环已完成：golden fixture 录制、离线 Judge、同快照 baseline 
 对比、Synthesizer 验证重试与最终拒绝、fallback、缓存版本隔离，以及
 `npm run verify` 门禁均已落地。在线评测仍是显式 opt-in，不属于默认测试门禁。
 
+补充：全球指数地球仪已修正行情状态语义。缺少有效涨跌幅时显示“暂无数据”，不再把
+`null` 当作 0 或上涨，避免行情源不可用时产生误导性绿色标记。
+
 ## H0–H1.5 · Golden 录制
 
 - [x] 写 `eval/record.test.ts`：调用现有 `getCompanyProfile` / `resolveSymbol`，把真实返回值 dump 为 fixture（1h）
   - `AAPL`（齐全）/ `CRWV`（档案薄）/ `ZZZZZZ`（拒绝路径）
-- [ ] 每个 fixture 构造 1–2 个 `known_traps`：把某个真实字段在 grounding 中置 `null`（0.5h）
+- [x] 两个有效标的各构造 1 个 `known_traps`：把 `employees` 在 grounding 中置 `null`；无效代码只测拒绝、不生成报告
 
 ## H1.5–H3.5 · Judge 脚本（纯程序化，无 LLM 评分）
 
@@ -36,15 +39,15 @@ MVP 闭环已完成：golden fixture 录制、离线 Judge、同快照 baseline 
 ## H3.5–H4 · Baseline
 
 - [x] 同一冻结输入运行单调用与 Multi-Agent → `eval/reports/comparison.json`（0.5h）
-  - **必须发生在改任何业务代码之前**
+  - 注意：历史上未在多 Agent 改码前留存 baseline；这是事后以同一冻结输入重跑现有 legacy 单调用路径，不能称为改码前实测历史基线。
 
 ## H4–H8 · Multi-Agent（仅 fundamentals）
 
-- [ ] `BULL_CASE_SCHEMA` / `BEAR_CASE_SCHEMA`（复用 `SOURCED`）+ 两条立场对立的 system prompt（1h）
-- [ ] `Promise.allSettled` 并行调 Bull/Bear（`AI_MODEL_FAST`）；任一失败 → 直接走现有单调用路径（0.5h）
-- [ ] Synthesizer（`AI_MODEL_DEEP`）：grounding + bull + bear 注入 user prompt，仍输出 `FUNDAMENTALS_SCHEMA`（1h）
+- [x] `BULL_CASE_SCHEMA` / `BEAR_CASE_SCHEMA`（复用 `SOURCED`）+ 两条立场对立的 system prompt
+- [x] `Promise.all` 并行调 Bull/Bear（`AI_MODEL_FAST`），各自捕获失败/超时；任一失败 → 走单调用 fallback（与原计划的 `allSettled` 实现方式不同）
+- [x] Synthesizer（`AI_MODEL_DEEP`）：grounding + bull + bear 注入 user prompt，仍输出 `FUNDAMENTALS_SCHEMA`
 - [x] `verifyAgainstFacts`：数字/日期 fact 与 grounding 硬比对；Synthesizer 失败时反馈违规项并重试，仍失败则 fallback（1h）
-- [ ] 冒烟：AAPL 跑一次，肉眼确认 Bull/Bear 真对立而非复述（0.5h）
+- [x] AAPL/CRWV 在线 trace 人工复核：AAPL 有正反方向；CRWV 论点偏泛化，不能宣称辩论改善质量，详见 `docs/mvp-eval-summary.md`
 
 ## H8–H9.5 · 对比
 
@@ -64,7 +67,7 @@ MVP 闭环已完成：golden fixture 录制、离线 Judge、同快照 baseline 
 - CI / GitHub Actions 接入
 - LLM-Judge 主观维度（hedge quality、debate quality）
 - prompt skill 化 / 外部 prompt 管理框架
-- 语义级 verifier、失败自动重试 Synthesizer
+- 语义级 verifier（数值验证失败时的 Synthesizer 单次重试已实现）
 - debate 过程的 UI 展示
 
 ## 风险提示

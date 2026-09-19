@@ -4,19 +4,31 @@
 
 ## 2026-09-19
 
+### 2026-09-19 12:03 PDT：补齐总览页宏观简报入口
+
+- 修改范围：`src/routes/index.tsx`、`docs/change-log.md`。
+- 具体变更点：本次开始时发现 `docs/change-log.md`、`eval/reports/comparison.json`、`src/lib/research-harness.server.ts`、`src/lib/research-harness.test.ts` 已有未提交修改，不推断其来源且未覆盖相关内容；在总览页“数据说明”卡片中新增“查看完整事件与影响分析”按钮，点击后进入每日简报页，与原有“点击下方入口”提示保持一致。
+- 验证结果：`npx eslint src/routes/index.tsx`、`npm run typecheck`、`git diff --check` 均通过。
+
 ### 2026-09-19：修复全球指数地球仪将无涨跌数据误显示为上涨
 
 - 修改范围：`src/components/GlobalIndexGlobe.tsx`、`docs/change-log.md`。
 - 具体变更点：地球仪标记不再把 `changePct = null` 当作 0 处理；缺少涨跌数据时显示为灰色“暂无数据”，只有非空非负值显示上涨，负值显示下跌。
-- 验证结果：待执行定向类型检查与构建验证。
+- 验证结果：已通过 `npm run typecheck`、`npm run build` 和 `git diff --check`；后续同步更新路演 PPT 与讲解稿。
+
+### 2026-09-19：同步全球指数地球仪修复到路演材料
+
+- 修改范围：`scripts/create_multi_agent_pitch_deck.mjs`、`docs/harness-multi-agent.md`、`docs/mvp-harness-agent-todo.md`、`docs/change-log.md`；项目外同步更新 `/Users/farnlyluo/Documents/helix trading-presentation/pitch-talk-track.md` 与 PPT 输出。
+- 具体变更点：在应用工作流页补充行情状态语义，明确上涨、下跌和暂无数据的区分；Harness 文档与 MVP TODO 增加 `null` 不得被当作上涨的说明；重新生成路演 PPT 并同步讲解稿。
+- 验证结果：待执行 PPTX 包完整性、页数与渲染检查，并通过 `git diff --check`。
 
 ## 2026-09-19
 
 ### 2026-09-20 02:55 CST：MVP 交付复核开始
 
-- 修改范围：`docs/change-log.md`、`eval/live.test.ts`、`src/lib/research-harness.test.ts`；后续本条会随实际收尾文件同步更新。
-- 具体变更点：开始时发现既有未提交修改：`docs/change-log.md`、`docs/harness-multi-agent.md`、`docs/mvp-harness-agent-todo.md`、`package.json`、`scripts/create_multi_agent_pitch_deck.mjs`、`src/components/AppShell.tsx`、`src/components/GlobalIndexGlobe.tsx`、`src/components/nav-items.ts`、`src/lib/events-window.server.ts`、`src/lib/market-seed.ts`、`src/lib/research-harness.server.ts`、`src/lib/research-harness.test.ts`、`src/lib/research.functions.ts`、`src/lib/research.server.ts`、`src/routes/briefing.portfolio.tsx`、`src/routes/index.tsx`、`src/styles.css` 及 `eval/`；不推断来源，仅在相关文件现状上继续收尾。在线报告改为保存 Bull/Bear trace 供人工评审，并补充 Agent 超时后实际走 fallback 的演练测试。
-- 验证结果：已由 `git status --short` 确认；待完成报告复核、fallback 演练及构建检查。
+- 修改范围：`docs/change-log.md`、`docs/harness-multi-agent.md`、`docs/mvp-harness-agent-todo.md`、`docs/mvp-eval-summary.md`、`eval/live.test.ts`、`eval/report.test.ts`、`eval/reports/comparison.json`、`src/lib/research-harness.server.ts`、`src/lib/research-harness.test.ts`。
+- 具体变更点：开始时发现既有未提交修改：`docs/change-log.md`、`docs/harness-multi-agent.md`、`docs/mvp-harness-agent-todo.md`、`package.json`、`scripts/create_multi_agent_pitch_deck.mjs`、`src/components/AppShell.tsx`、`src/components/GlobalIndexGlobe.tsx`、`src/components/nav-items.ts`、`src/lib/events-window.server.ts`、`src/lib/market-seed.ts`、`src/lib/research-harness.server.ts`、`src/lib/research-harness.test.ts`、`src/lib/research.functions.ts`、`src/lib/research.server.ts`、`src/routes/briefing.portfolio.tsx`、`src/routes/index.tsx`、`src/styles.css` 及 `eval/`；不推断来源，仅在相关文件现状上继续收尾。在线报告改为保存 Bull/Bear trace 供人工评审，并补充 Agent 超时后实际走 fallback 的演练测试。发现 AAPL 市值 `4.94T` 是对可信原始市值的合理舍入且该字段会被代码覆写，故校验器排除其字符串比对；报告基于已存原始输出调整该项评分，不再请求模型。新增离线测试验证保存的报告分数可从原始输出重算。
+- 验证结果：`npm run verify` 通过（9 个常规测试文件、90 项测试；2 个在线 opt-in 默认跳过），`npm run build` 通过，`git diff --check` 通过；Agent 超时 fallback 与报告重算定向测试通过。获准网络后 `npm run eval:live` 完成并保存 Bull/Bear trace，人工审阅已记录：AAPL 正反方向可辨，CRWV 论点通用，均无充分证据支持多 Agent 质量优势。本地 `/research` SSR 响应 HTTP 200；无可用浏览器会话，未完成登录后的点击生成测试。报告基于已存原始输出重算，单调用 AAPL 10/10、多 Agent 8/8；CRWV 1/1 与 2/2，两个空值陷阱均未编造。
 
 ### 2026-09-19：按当前 Harness 与评测实现更新路演材料及关联文档
 

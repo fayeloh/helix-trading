@@ -189,6 +189,9 @@ const IGNORED_VERIFICATION_KEYS = new Set([
   "website",
   "ticker",
   "exchange_ticker",
+  // The trusted company profile overwrites this field after generation; rounded
+  // model renderings such as 4.94T are not exact-string comparable to raw USD.
+  "market_cap",
 ]);
 
 function normalized(value: unknown): string {

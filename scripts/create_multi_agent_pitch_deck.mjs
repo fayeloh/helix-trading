@@ -101,7 +101,7 @@ function slide2() {
 }
 
 function slide3() {
-  let b = header('03 / Application workflow', 'Multi-Agent 已嵌入真实的研究工作流', '入口统一，按研究模块选择策略；fundamentals 使用 Multi-Agent，其他模块保留单模型路径。');
+  let b = header('03 / Application workflow', 'Multi-Agent 已嵌入真实的研究工作流', '入口统一，按研究模块选择策略；fundamentals 使用 Multi-Agent，其他模块保留单模型路径。行情展示同时区分上涨、下跌和暂无数据。');
   const nodes = [
     [68, '输入股票代码', '用户输入\nTSLA / AAPL / ...', C.blue],
     [262, '解析与验证', '标准化 symbol\n检查可研究性', C.teal],
@@ -120,7 +120,7 @@ function slide3() {
   b += tx(68, 202, 1140, 24, '一条入口，多条研究策略', 17, C.teal, { bold: true });
   b += rect(68, 430, 1144, 142, C.panel2, { line: C.line, lineWidth: 1 });
   b += tx(92, 452, 260, 24, '生产链路', 16, C.teal, { bold: true });
-  b += tx(92, 490, 760, 55, '统一事实输入 → Bull / Bear → Synthesizer → Verifier → fallback\n结果带有 _debate trace，并由 npm run verify 在提交前自动检查。', 18, C.text);
+  b += tx(92, 490, 760, 55, '统一事实输入 → Bull / Bear → Synthesizer → Verifier → fallback\n结果带有 _debate trace；行情层明确区分上涨、下跌与暂无数据。', 18, C.text);
   b += tx(930, 452, 250, 24, '离线评测', 14, C.muted, { align: 'r' });
   b += tx(930, 488, 250, 52, 'golden fixture\n同快照 baseline / debate', 17, C.green, { bold: true, align: 'r' });
   return slideXml(b);

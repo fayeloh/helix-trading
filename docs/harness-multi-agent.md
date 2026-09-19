@@ -17,6 +17,13 @@ The payload includes `_debate` with agent status, durations, fallback reason, an
 verifier output. Fundamentals cache entries are versioned so old single-call
 reports do not mask this pipeline. `_facts` remains unchanged.
 
+## Market data display semantics
+
+The global index globe keeps data availability separate from direction. A positive
+`changePct` is shown as up, a negative value as down, and `null` or non-finite
+values as unknown. Unknown values are rendered in gray with `—`; they are never
+coerced to zero or presented as an up move.
+
 ## Evaluation
 
 `npm run eval:record` records public AAPL and CRWV profile facts and the ZZZZZZ
@@ -29,11 +36,13 @@ commands use `.env.local` and external APIs; ordinary `npm test` stays offline.
 The current judge checks numeric/date `kind: fact` claims and the masked-null
 trap only. It does not validate semantic claims, source attribution, debate
 quality, or cost. The latest same-snapshot run found no fabricated masked-null
-trap for either AAPL or CRWV. AAPL scored 11/11 for single-call and 8/8 for
-Multi-Agent; CRWV scored 1/1 and 2/2. Because the sample is small and the two
-architectures produced different numbers of claims, these results do not prove
-a general quality improvement. The optional Phase 3 and CI quality regression
-gate remain future work.
+trap for either AAPL or CRWV. After excluding rounded `company_profile.market_cap`
+(overwritten from the trusted profile), AAPL scored 10/10 for single-call and
+8/8 for Multi-Agent; CRWV scored 1/1 and 2/2. Because the sample is small and
+the two architectures produced different numbers of claims, these results do
+not prove a general quality improvement. See `docs/mvp-eval-summary.md` for
+manual review. The optional Phase 3 and CI quality regression gate remain
+future work.
 
 ## Minimum engineering gate
 
@@ -44,8 +53,8 @@ npm run verify
 ```
 
 The gate passes only when Harness-scoped ESLint, project-wide TypeScript
-checking, and all Vitest tests pass. The current baseline is 8 test files and
-87 passing tests, with 2 opt-in recording/live-evaluation tests skipped by
+checking, and all Vitest tests pass. The current baseline is 9 test files and
+90 passing tests, with 2 opt-in recording/live-evaluation tests skipped by
 default. The Harness smoke tests cover the multi-agent success path, analyst
 failure fallback, synthesizer failure fallback, verifier retry/rejection,
 grounded fact verification, and the boundary between facts and inferences.
