@@ -1,0 +1,349 @@
+import { ET_ZONE } from "./time-format";
+import { readCache, writeCache } from "./market.server";
+import { googleNews, rssFeed, type NewsItem } from "./news.server";
+import { translateTitlesToZh } from "./translate.server";
+
+import type {
+  HeadlineImpact,
+  Importance,
+  MacroCalendarEvent,
+  TopHeadline,
+} from "./macro-briefing.types";
+
+const UA =
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36";
+
+/** 任意时刻 → 美东挂钟 `YYYY-MM-DD HH:mm`。 */
+export function etStamp(d: Date = new Date()): string {
+  const p: Record<string, string> = {};
+  const dtf = new Intl.DateTimeFormat("en-CA", {
+    timeZone: ET_ZONE,
+    hour12: false,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  for (const part of dtf.formatToParts(d)) {
+    if (part.type !== "literal") p[part.type] = part.value;
+  }
+  const hour = p["hour"] === "24" ? "00" : p["hour"];
+  return `${p["year"]}-${p["month"]}-${p["day"]} ${hour}:${p["minute"]}`;
+}
+
+/** 美东日期 `YYYY-MM-DD`，可按天偏移。 */
+export function etDate(offsetDays = 0, d: Date = new Date()): string {
+  return etStamp(new Date(d.getTime() + offsetDays * 86400000)).slice(0, 10);
+}
+
+const BULLISH = [
+  "上涨", "走高", "创新高", "反弹", "超预期", "好于预期", "降息", "增持", "回购", "上调", "扩产", "利好", "大涨", "获批",
+  "rise", "rises", "rally", "jump", "jumps", "surge", "surges", "soar", "gains", "beat", "beats",
+  "record high", "upgrade", "raises outlook", "buyback", "approval", "rate cut",
+];
+const BEARISH = [
+  "下跌", "下挫", "跌破", "重挫", "不及预期", "低于预期", "加息", "关税", "制裁", "裁员", "下调", "亏损", "违约", "暴跌", "调查", "罢工",
+  "fall", "falls", "drop", "drops", "slump", "sink", "sinks", "plunge", "tumble", "miss", "misses",
+  "cuts outlook", "downgrade", "layoff", "layoffs", "tariff", "sanction", "probe", "lawsuit",
+  "default", "strike", "rate hike", "selloff",
+];
+
+/** 依据标题措辞判断方向；两侧都不命中或同时命中时返回中性，不做猜测。 */
+export function impactOfTitle(title: string): HeadlineImpact {
+  const t = title.toLowerCase();
+  const up = BULLISH.filter((k) => t.includes(k.toLowerCase())).length;
+  const down = BEARISH.filter((k) => t.includes(k.toLowerCase())).length;
+  if (up > down) return "bullish";
+  if (down > up) return "bearish";
+  return "neutral";
+}
+
+
+const SECTOR_HINTS: { keys: string[]; sector: string }[] = [
+  { keys: ["芯片", "半导体", "英伟达", "台积电", "AMD", "chip", "semiconductor", "nvidia", "tsmc"], sector: "半导体" },
+  { keys: ["银行", "券商", "保险", "金融", "bank", "broker", "insurer", "financial"], sector: "金融" },
+  { keys: ["原油", "石油", "天然气", "OPEC", "能源", "oil", "crude", "gas", "energy"], sector: "能源" },
+  { keys: ["黄金", "白银", "贵金属", "gold", "silver", "bullion"], sector: "贵金属" },
+  { keys: ["药", "医疗", "生物", "pharma", "drug", "health", "biotech", "fda"], sector: "医疗保健" },
+  { keys: ["汽车", "新能源车", "电动车", "特斯拉", "比亚迪", "auto", "ev ", "tesla", "byd"], sector: "汽车与新能源" },
+  { keys: ["房地产", "地产", "楼市", "housing", "real estate", "mortgage"], sector: "房地产" },
+  { keys: ["消费", "零售", "餐饮", "retail", "consumer", "restaurant"], sector: "消费" },
+  { keys: ["比特币", "以太", "加密", "bitcoin", "ether", "crypto"], sector: "加密货币" },
+  { keys: ["AI", "人工智能", "算力", "云", "artificial intelligence", "cloud", "data center"], sector: "科技与AI" },
+];
+
+
+function sectorsOfTitle(title: string): string[] {
+  const out: string[] = [];
+  for (const h of SECTOR_HINTS) {
+    if (h.keys.some((k) => title.toLowerCase().includes(k.toLowerCase())) && !out.includes(h.sector)) {
+      out.push(h.sector);
+    }
+  }
+  return out.slice(0, 3);
+}
+
+const TICKER_HINTS: { keys: string[]; ticker: string }[] = [
+  { keys: ["英伟达", "NVIDIA"], ticker: "NVDA" },
+  { keys: ["苹果", "Apple"], ticker: "AAPL" },
+  { keys: ["特斯拉", "Tesla"], ticker: "TSLA" },
+  { keys: ["微软", "Microsoft"], ticker: "MSFT" },
+  { keys: ["亚马逊", "Amazon"], ticker: "AMZN" },
+  { keys: ["谷歌", "Alphabet"], ticker: "GOOGL" },
+  { keys: ["台积电", "TSMC"], ticker: "TSM" },
+  { keys: ["腾讯"], ticker: "0700.HK" },
+  { keys: ["阿里巴巴", "阿里"], ticker: "9988.HK" },
+  { keys: ["小米"], ticker: "1810.HK" },
+  { keys: ["比亚迪"], ticker: "1211.HK" },
+  { keys: ["比特币", "Bitcoin", "BTC"], ticker: "BTC-USD" },
+  { keys: ["以太坊", "Ethereum", "ETH"], ticker: "ETH-USD" },
+];
+
+function tickersOfTitle(title: string): string[] {
+  const out: string[] = [];
+  for (const h of TICKER_HINTS) {
+    if (h.keys.some((k) => title.toLowerCase().includes(k.toLowerCase())) && !out.includes(h.ticker)) {
+      out.push(h.ticker);
+    }
+  }
+  return out.slice(0, 4);
+}
+
+function toHeadline(n: NewsItem, zhTitle?: string): TopHeadline | null {
+  if (!n.title) return null;
+  const display = zhTitle?.trim() || n.title;
+  // 方向与板块识别同时基于中英文文本，翻译成功与否都能命中。
+  const matchText = `${display} ${n.title}`;
+  const impact = impactOfTitle(matchText);
+  const time = n.publishedAt ? etStamp(new Date(n.publishedAt)) : etStamp();
+  return {
+    headline: display,
+    ...(display !== n.title ? { headline_original: n.title } : {}),
+    source: n.source,
+    time,
+    impact,
+    affected_sectors: sectorsOfTitle(matchText),
+    affected_tickers: [...tickersOfTitle(matchText), ...(n.related ?? [])].slice(0, 5),
+    reasoning:
+      impact === "neutral"
+        ? "标题措辞未给出明确方向，需等待后续数据或公司确认。"
+        : `标题包含${impact === "bullish" ? "偏正面" : "偏负面"}表述，短期对上述范围形成${impact === "bullish" ? "利多" : "利空"}压力。`,
+    ...(n.url ? { url: n.url } : {}),
+  };
+}
+
+/** 重要性关键词权重：宏观政策与权重股优先（中英文均可命中）。 */
+const IMPORTANCE_WEIGHTS: { test: RegExp; score: number }[] = [
+  { test: /(美联储|FOMC|议息|加息|降息|鲍威尔|央行|利率决议|federal reserve|\bfed\b|rate (cut|hike|decision)|central bank)/i, score: 6 },
+  { test: /(CPI|PCE|PPI|通胀|非农|失业率|GDP|就业|inflation|payroll|jobless|unemployment)/i, score: 5 },
+  { test: /(关税|制裁|出口管制|贸易战|地缘|战争|tariff|sanction|export control|trade war|war\b)/i, score: 4 },
+  { test: /(财报|业绩|营收|净利|指引|超预期|不及预期|earnings|revenue|guidance|profit|beats|misses)/i, score: 3 },
+  { test: /(英伟达|苹果|特斯拉|微软|台积电|亚马逊|谷歌|腾讯|阿里|nvidia|apple|tesla|microsoft|amazon|alphabet|tsmc|tencent|alibaba)/i, score: 3 },
+  { test: /(标普|纳斯达克|道琼斯|恒生|上证|比特币|黄金|原油|s&p|nasdaq|dow|hang seng|bitcoin|gold|oil)/i, score: 2 },
+];
+
+
+/** 单条新闻重要性得分（关键词加权 + 新鲜度）。 */
+export function headlineImportance(h: TopHeadline, newestDate: string): number {
+  const text = `${h.headline} ${h.headline_original ?? ""}`;
+  let score = 0;
+  for (const w of IMPORTANCE_WEIGHTS) if (w.test.test(text)) score += w.score;
+  if (h.impact !== "neutral") score += 1;
+  score += Math.min(2, h.affected_tickers.length * 0.5);
+  if (h.time.slice(0, 10) === newestDate) score += 3;
+  return score;
+}
+
+/** 只保留最新一天的新闻；不足 n 条时按时间回补更早的。 */
+export function pickTopHeadlines(items: TopHeadline[], limit: number): TopHeadline[] {
+  if (!items.length) return [];
+  const sortedByTime = [...items].sort((a, b) => b.time.localeCompare(a.time));
+  const newestDate = sortedByTime[0]!.time.slice(0, 10);
+  const rank = (list: TopHeadline[]) =>
+    [...list].sort(
+      (a, b) =>
+        headlineImportance(b, newestDate) - headlineImportance(a, newestDate) ||
+        b.time.localeCompare(a.time),
+    );
+  const today = rank(sortedByTime.filter((h) => h.time.slice(0, 10) === newestDate));
+  if (today.length >= limit) return today.slice(0, limit);
+  const older = rank(sortedByTime.filter((h) => h.time.slice(0, 10) !== newestDate));
+  return [...today, ...older].slice(0, limit);
+}
+
+/**
+ * 头条实时源（云端 Worker 可直连，按可靠性排序）。
+ * Google News RSS 在服务端常被拦截，只作为补充。
+ */
+const HEADLINE_FEEDS: { url: string; source: string; limit: number }[] = [
+  { url: "https://www.cnbc.com/id/100003114/device/rss/rss.html", source: "CNBC", limit: 12 },
+  { url: "https://www.cnbc.com/id/20910258/device/rss/rss.html", source: "CNBC 经济", limit: 10 },
+  { url: "https://www.cnbc.com/id/10000664/device/rss/rss.html", source: "CNBC 市场", limit: 10 },
+  { url: "https://www.investing.com/rss/news_25.rss", source: "Investing.com", limit: 10 },
+  { url: "https://finance.yahoo.com/news/rssindex", source: "Yahoo Finance", limit: 12 },
+];
+
+/**
+ * 实时头条：多源 RSS 聚合 + AI 中文标题翻译，保留真实发布时间与原文链接。
+ * 全部源失败时抛错，交由调用方决定是否降级，避免把空结果缓存成「暂不可用」。
+ */
+export async function getLiveHeadlines(limit = 5): Promise<TopHeadline[]> {
+  const cacheKey = "macro_headlines_live_v3";
+  const cached = await readCache<TopHeadline[]>(cacheKey);
+  if (cached?.length) return cached;
+
+  const batches = await Promise.all([
+    ...HEADLINE_FEEDS.map((f) =>
+      rssFeed(f.url, f.source, f.limit).catch((): NewsItem[] => []),
+    ),
+    googleNews("美股 财经 头条", "zh-CN", 8).catch((): NewsItem[] => []),
+  ]);
+
+  const seen = new Set<string>();
+  const raw: NewsItem[] = [];
+  for (const n of batches.flat()) {
+    const key = n.title.toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5]/g, "").slice(0, 40);
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    raw.push(n);
+  }
+  if (!raw.length) throw new Error("实时头条源暂时无返回");
+
+  // 先按重要性挑选，再只翻译入选的标题，控制 AI 成本。
+  const scored = raw
+    .map((n) => ({ n, h: toHeadline(n) }))
+    .filter((x): x is { n: NewsItem; h: TopHeadline } => !!x.h);
+  const picked = pickTopHeadlines(
+    scored.map((x) => x.h),
+    limit,
+  );
+  const pickedRaw = picked.map(
+    (h) => scored.find((x) => x.h.headline === h.headline)?.n,
+  );
+  const zh = await translateTitlesToZh(pickedRaw.map((n) => n?.title ?? ""));
+
+  const out = picked
+    .map((h, i) => {
+      const n = pickedRaw[i];
+      return n ? toHeadline(n, zh[i]) : h;
+    })
+    .filter((h): h is TopHeadline => !!h);
+
+  if (out.length) await writeCache(cacheKey, out, 300);
+  return out;
+}
+
+
+const HIGH_EVENT =
+  /(CPI|PPI|PCE|GDP|Nonfarm|Non-Farm|Payroll|FOMC|Fed |Interest Rate|Unemployment|Retail Sales|Jobless)/i;
+
+type NasdaqEconRow = {
+  gmt?: string;
+  country?: string;
+  eventName?: string;
+  consensus?: string;
+  previous?: string;
+};
+
+type NasdaqEarningsRow = {
+  time?: string;
+  symbol?: string;
+  name?: string;
+  marketCap?: string;
+  epsForecast?: string;
+};
+
+async function nasdaqJson<T>(url: string): Promise<T | null> {
+  try {
+    const res = await fetch(url, { headers: { "User-Agent": UA, Accept: "application/json" } });
+    if (!res.ok) return null;
+    return (await res.json()) as T;
+  } catch {
+    return null;
+  }
+}
+
+function importanceOfEvent(row: NasdaqEconRow): Importance {
+  const name = row.eventName ?? "";
+  const isUs = (row.country ?? "").toLowerCase().includes("united states");
+  if (isUs && HIGH_EVENT.test(name)) return "high";
+  if (isUs) return "medium";
+  return "low";
+}
+
+function parseCap(raw?: string): number {
+  const n = Number((raw ?? "").replace(/[^0-9.]/g, ""));
+  return Number.isFinite(n) ? n : 0;
+}
+
+/** 未来 48 小时宏观日历：Nasdaq 经济数据日历 + 财报日历（真实时间，美东口径）。 */
+export async function getLiveCalendar(limit = 12): Promise<MacroCalendarEvent[]> {
+  const cacheKey = "macro_calendar_live_v2";
+  const cached = await readCache<MacroCalendarEvent[]>(cacheKey);
+  if (cached?.length) return cached;
+
+  const days = [etDate(0), etDate(1), etDate(2)];
+  const nowEt = etStamp();
+
+  const econPages = await Promise.all(
+    days.map((d) =>
+      nasdaqJson<{ data?: { rows?: NasdaqEconRow[] } }>(
+        `https://api.nasdaq.com/api/calendar/economicevents?date=${d}`,
+      ).then((j) => ({ date: d, rows: j?.data?.rows ?? [] })),
+    ),
+  );
+  const earnPages = await Promise.all(
+    days.slice(0, 2).map((d) =>
+      nasdaqJson<{ data?: { rows?: NasdaqEarningsRow[] } }>(
+        `https://api.nasdaq.com/api/calendar/earnings?date=${d}`,
+      ).then((j) => ({ date: d, rows: j?.data?.rows ?? [] })),
+    ),
+  );
+
+  const out: MacroCalendarEvent[] = [];
+
+  for (const page of econPages) {
+    for (const row of page.rows) {
+      const name = row.eventName?.trim();
+      const hhmm = /^\d{2}:\d{2}$/.test(row.gmt ?? "") ? row.gmt! : null;
+      if (!name || !hhmm) continue;
+      const time = `${page.date} ${hhmm}`;
+      if (time < nowEt) continue;
+      const label = row.country && !row.country.toLowerCase().includes("united states")
+        ? `${row.country} · ${name}`
+        : name;
+      out.push({
+        event: row.consensus ? `${label}（市场预期 ${row.consensus}）` : label,
+        time,
+        importance: importanceOfEvent(row),
+        url: "https://www.nasdaq.com/market-activity/economic-calendar",
+      });
+    }
+  }
+
+  for (const page of earnPages) {
+    const rows = [...page.rows].sort((a, b) => parseCap(b.marketCap) - parseCap(a.marketCap)).slice(0, 4);
+    for (const row of rows) {
+      if (!row.symbol) continue;
+      const afterHours = (row.time ?? "").includes("after");
+      const time = `${page.date} ${afterHours ? "16:30" : "08:00"}`;
+      if (time < nowEt) continue;
+      const cap = parseCap(row.marketCap);
+      out.push({
+        event: `${row.name ?? row.symbol}（${row.symbol}）财报 · ${afterHours ? "美股盘后" : "美股盘前"}${
+          row.epsForecast ? `，一致预期 EPS ${row.epsForecast}` : ""
+        }`,
+        time,
+        importance: cap >= 100_000_000_000 ? "high" : "medium",
+        url: `https://www.nasdaq.com/market-activity/stocks/${row.symbol.toLowerCase()}/earnings`,
+      });
+    }
+  }
+
+  const rank: Record<Importance, number> = { high: 0, medium: 1, low: 2 };
+  out.sort((a, b) => rank[a.importance] - rank[b.importance] || a.time.localeCompare(b.time));
+  const picked = out.slice(0, limit).sort((a, b) => a.time.localeCompare(b.time));
+  if (picked.length) await writeCache(cacheKey, picked, 900);
+  return picked;
+}

@@ -1,0 +1,273 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Helix Trading design system — cyberpunk trading terminal.
+ * Neon light green signal color + near-black surfaces + cool grays.
+ * All colors are semantic tokens. Never hardcode colors in components.
+ * Green is the SIGNAL color (UI state); quote-up / quote-down carry price direction.
+ */
+
+@theme inline {
+  --font-sans: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 2px);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-muted: var(--primary-muted);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-faint: var(--faint);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-bull: var(--bull);
+  --color-bull-foreground: var(--bull-foreground);
+  --color-bull-muted: var(--bull-muted);
+  --color-bear: var(--bear);
+  --color-bear-foreground: var(--bear-foreground);
+  --color-bear-muted: var(--bear-muted);
+  --color-warn: var(--warn);
+  --color-quote-up: var(--quote-up);
+  --color-quote-down: var(--quote-down);
+  --color-quote-flat: var(--quote-flat);
+
+  --color-surface: var(--surface);
+  --color-surface-foreground: var(--surface-foreground);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+:root {
+  --radius: 4px;
+  --background: #0a0a0a;
+  --foreground: #e8ecec;
+  --surface: #14181a;
+  --surface-foreground: #e8ecec;
+  --card: #101314;
+  --card-foreground: #e8ecec;
+  --popover: #161a1b;
+  --popover-foreground: #e8ecec;
+  --primary: #39ff88;
+  --primary-foreground: #04120a;
+  --primary-muted: rgba(57, 255, 136, 0.12);
+  --secondary: #191e20;
+  --secondary-foreground: #e8ecec;
+  --muted: #171b1c;
+  --muted-foreground: #b0b0b0;
+  --faint: #7a8385;
+  --accent: #7fffd0;
+  --accent-foreground: #04120a;
+  --destructive: #ff3b47;
+  --destructive-foreground: #0a0a0a;
+  --border: #22282a;
+  --border-strong: #2e3639;
+  --input: #0e1213;
+  --ring: #39ff88;
+  --bull: #39ff88;
+  --bull-foreground: #04120a;
+  --bull-muted: rgba(57, 255, 136, 0.14);
+  --bear: #ff4d5e;
+  --bear-foreground: #0a0a0a;
+  --bear-muted: rgba(255, 77, 94, 0.14);
+  --warn: #ffc53d;
+  /* 涨跌配色：涨绿 / 跌红（与信号色分离使用） */
+  --quote-up: #39ff88;
+  --quote-down: #ff4d5e;
+  --quote-flat: #9aa3a5;
+  --glow-primary:
+    0 0 0 1px rgba(57, 255, 136, 0.35), 0 0 16px rgba(57, 255, 136, 0.18);
+
+  --chart-1: #39ff88;
+  --chart-2: #7fffd0;
+  --chart-3: #ff4d5e;
+  --chart-4: #ffc53d;
+  --chart-5: #6e7a7d;
+  --sidebar: #0c0f10;
+  --sidebar-foreground: #e8ecec;
+  --sidebar-primary: #39ff88;
+  --sidebar-primary-foreground: #04120a;
+  --sidebar-accent: #191e20;
+  --sidebar-accent-foreground: #e8ecec;
+  --sidebar-border: #22282a;
+  --sidebar-ring: #39ff88;
+}
+
+.dark {
+  color-scheme: dark;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3 {
+    letter-spacing: -0.01em;
+  }
+
+  /* 终端感焦点环：1px 描边，无发光模糊 */
+  :focus-visible {
+    outline: 1px solid var(--ring);
+    outline-offset: 2px;
+  }
+}
+
+@utility tabular {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 11px 大写微标签，仅用于卡片小标题 / 时间口径 */
+@utility micro-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 16px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+@utility glow-primary {
+  box-shadow: var(--glow-primary);
+}
+
+/* 顶部 1px 扫描线：8s 一次，透明度 ≤12% */
+@utility scanline {
+  position: relative;
+  &::after {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    bottom: -1px;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(57, 255, 136, 0.12) 45%,
+      rgba(57, 255, 136, 0.12) 55%,
+      transparent 100%
+    );
+    animation: helix-scan 8s linear infinite;
+    pointer-events: none;
+  }
+}
+
+/* 数值更新时的一次性底色闪烁 */
+@utility flash-up {
+  animation: helix-flash-up 400ms ease-out 1;
+}
+
+@utility flash-down {
+  animation: helix-flash-down 400ms ease-out 1;
+}
+
+@keyframes helix-scan {
+  0% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  8% {
+    opacity: 1;
+  }
+  40% {
+    opacity: 1;
+  }
+  60% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+@keyframes helix-flash-up {
+  from {
+    background-color: rgba(57, 255, 136, 0.08);
+  }
+  to {
+    background-color: transparent;
+  }
+}
+
+@keyframes helix-flash-down {
+  from {
+    background-color: rgba(255, 77, 94, 0.08);
+  }
+  to {
+    background-color: transparent;
+  }
+}
+
+/* 骨架屏横向扫光 */
+@keyframes helix-sweep {
+  0% {
+    background-position: -140% 0;
+  }
+  100% {
+    background-position: 240% 0;
+  }
+}
+
+@utility skeleton-sweep {
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.04) 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0.04) 100%
+  );
+  background-size: 200% 100%;
+  animation: helix-sweep 1.2s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
