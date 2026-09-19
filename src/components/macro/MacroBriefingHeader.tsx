@@ -38,59 +38,70 @@ export function MacroBriefingHeader({ date, fetchedAt, onRefresh, refreshing }: 
   const ago = agoLabel(fetchedAt);
 
   return (
-    <header className="scanline sticky top-0 z-30 border-b border-border bg-background/85 backdrop-blur-md">
-      <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-2 px-4 pt-3">
-        <div className="flex min-w-0 items-center gap-2">
-          <Link
-            to="/"
-            aria-label="Helix Trading"
-            className="grid size-7 shrink-0 place-items-center rounded-sm bg-primary text-primary-foreground"
-          >
-            <CandlestickChart className="size-4" />
+    <>
+      <header className="scanline sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur-md">
+        <div className="mx-auto flex min-h-[52px] max-w-[1400px] flex-wrap items-center gap-3 px-4 py-2">
+          <Link to="/" className="flex items-center gap-2">
+            <span className="grid size-7 place-items-center rounded-sm bg-primary text-primary-foreground">
+              <CandlestickChart className="size-4" />
+            </span>
+            <span className="text-sm font-semibold tracking-tight">
+              Helix Trading
+              <span className="micro-label ml-2 rounded-sm border border-border px-1.5 py-0.5">
+                {t("app.tagline")}
+              </span>
+            </span>
           </Link>
-          <div className="min-w-0">
-            <h1 className="truncate text-base font-semibold tracking-tight sm:text-lg">
-              每日宏观简报
-            </h1>
-            <p className="micro-label truncate">
-              {date ?? "—"}（美东交易日） · {label} · {ccyLabel}
-              {ago ? ` · ${ago}` : ""}
-            </p>
+
+          <nav className="briefing-nav order-3 flex w-full gap-1 overflow-x-auto md:order-none md:w-auto">
+            {NAV.map((item) => {
+              const active = isNavActive(item.to, pathname);
+              return (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  aria-current={active ? "page" : undefined}
+                  className={`relative inline-flex h-[30px] shrink-0 items-center gap-1.5 rounded-sm px-2.5 text-xs font-medium transition-colors ${
+                    active
+                      ? "text-foreground after:absolute after:inset-x-1.5 after:-bottom-[7px] after:h-[2px] after:bg-primary"
+                      : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground"
+                  }`}
+                >
+                  <item.icon className={`size-3.5 ${active ? "text-primary" : ""}`} />
+                  {t(item.key)}
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
+      </header>
+
+      <section className="border-b border-border bg-background/85 backdrop-blur-md">
+        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-2 px-4 py-3">
+          <div className="flex min-w-0 items-center gap-2">
+            <div className="min-w-0">
+              <h1 className="truncate text-base font-semibold tracking-tight sm:text-lg">
+                每日宏观简报
+              </h1>
+              <p className="micro-label truncate">
+                {date ?? "—"}（美东交易日） · {label} · {ccyLabel}
+                {ago ? ` · ${ago}` : ""}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {onRefresh ? (
+              <RefreshOptionsDialog onConfirm={onRefresh} refreshing={refreshing} />
+            ) : null}
+            <BriefingPrefsDialog />
+            <TimezoneSelect />
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          {onRefresh ? (
-            <RefreshOptionsDialog onConfirm={onRefresh} refreshing={refreshing} />
-          ) : null}
-          <BriefingPrefsDialog />
-          <TimezoneSelect />
-        </div>
-      </div>
 
-      <nav className="mx-auto flex max-w-5xl gap-1 overflow-x-auto px-4 py-2">
-        {NAV.map((item) => {
-          const active = isNavActive(item.to, pathname);
-          return (
-            <Link
-              key={item.to}
-              to={item.to}
-              className={`relative inline-flex h-[30px] shrink-0 items-center gap-1.5 rounded-sm px-2.5 text-xs font-medium transition-colors ${
-                active
-                  ? "text-foreground after:absolute after:inset-x-1.5 after:bottom-0 after:h-[2px] after:bg-primary"
-                  : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground"
-              }`}
-            >
-              <item.icon className={`size-3.5 ${active ? "text-primary" : ""}`} />
-              {t(item.key)}
-            </Link>
-          );
-        })}
-      </nav>
-
-      <p className="mx-auto max-w-5xl px-4 pb-2 text-xs leading-relaxed text-faint">
-        数据源发布时间以美国东部时间为准，页面已按你选择的时区换算。
-      </p>
-    </header>
+        <p className="mx-auto max-w-5xl px-4 pb-2 text-xs leading-relaxed text-faint">
+          数据源发布时间以美国东部时间为准，页面已按你选择的时区换算。
+        </p>
+      </section>
+    </>
   );
 }
-

@@ -102,7 +102,7 @@ function MacroBriefingPage() {
             </SectionCard>
           </div>
 
-          <div className="space-y-3 xl:sticky xl:top-[148px]">
+          <div className="space-y-3 xl:sticky xl:top-16">
             <SectionCard
               icon={Globe2}
               title="全球市场概览"

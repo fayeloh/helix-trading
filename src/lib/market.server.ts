@@ -1,7 +1,9 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { getSeedSeries } from "./market-seed";
 
 const UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36";
+const FMP_BASE = "https://financialmodelingprep.com";
 
 export type Candle = { t: number; c: number; o: number; h: number; l: number };
 
@@ -34,6 +36,20 @@ export async function readCache<T>(key: string): Promise<T | null> {
   }
 }
 
+/** Read an expired snapshot only as a last-resort display fallback. */
+export async function readStaleCache<T>(key: string): Promise<T | null> {
+  try {
+    const { data } = await supabaseAdmin
+      .from("market_cache")
+      .select("payload")
+      .eq("cache_key", key)
+      .maybeSingle();
+    return data?.payload as T | null;
+  } catch {
+    return null;
+  }
+}
+
 export async function writeCache(key: string, payload: unknown, ttlSeconds: number) {
   try {
     await supabaseAdmin.from("market_cache").upsert({
@@ -47,6 +63,85 @@ export async function writeCache(key: string, payload: unknown, ttlSeconds: numb
   }
 }
 
+/**
+ * 永久历史行情缓存：market_cache 只是复用现有服务端缓存表，历史数据
+ * 使用很长 TTL 保存，只有成功拿到更新数据时才覆盖。
+ */
+async function readStoredSeries(symbol: string, range: string): Promise<SeriesResult | null> {
+  return readCache<SeriesResult>(`series_history_v1_${symbol}_${range}`);
+}
+
+async function writeStoredSeries(symbol: string, range: string, series: SeriesResult) {
+  // 十年 TTL 代表长期历史快照，而不是 10 分钟页面缓存。
+  await writeCache(`series_history_v1_${symbol}_${range}`, series, 10 * 365 * 24 * 60 * 60);
+}
+
+type FmpBar = {
+  date?: string;
+  open?: number;
+  high?: number;
+  low?: number;
+  close?: number;
+};
+
+function fmpSymbol(symbol: string): string {
+  // FMP uses the same symbols for US equities and most FX pairs. These
+  // normalizations cover the common Yahoo aliases used by the dashboard.
+  return symbol
+    .replace(/^\^GSPC$/, "SP500")
+    .replace(/^\^IXIC$/, "COMP");
+}
+
+function fromDate(range: string): string {
+  const days = range === "1y" ? 370 : range === "3mo" ? 100 : range === "1mo" ? 40 : 10;
+  return new Date(Date.now() - days * 86_400_000).toISOString().slice(0, 10);
+}
+
+async function fetchFmpSeries(symbol: string, range: string): Promise<SeriesResult | null> {
+  const apiKey = process.env["FMP_API_KEY"];
+  if (!apiKey) return null;
+  const fmp = fmpSymbol(symbol);
+  const urls = [
+    `${FMP_BASE}/stable/historical-price-eod/full?symbol=${encodeURIComponent(fmp)}&from=${fromDate(range)}&apikey=${encodeURIComponent(apiKey)}`,
+    `${FMP_BASE}/api/v3/historical-price-full/${encodeURIComponent(fmp)}?from=${fromDate(range)}&apikey=${encodeURIComponent(apiKey)}`,
+  ];
+  for (const url of urls) {
+    try {
+      const res = await fetch(url, { headers: { Accept: "application/json" } });
+      if (!res.ok) continue;
+      const body = (await res.json()) as FmpBar[] | { historical?: FmpBar[] };
+      const rows = Array.isArray(body) ? body : body.historical ?? [];
+      const candles = rows
+        .filter((r) => r.date && typeof r.close === "number")
+        .map((r) => ({
+          t: new Date(`${r.date}T00:00:00Z`).getTime(),
+          c: r.close!,
+          o: r.open ?? r.close!,
+          h: r.high ?? r.close!,
+          l: r.low ?? r.close!,
+        }))
+        .sort((a, b) => a.t - b.t);
+      if (!candles.length) continue;
+      const series: SeriesResult = {
+        symbol,
+        currency: /\.HK$/.test(symbol) ? "HKD" : /\.SS$|\.SZ$/.test(symbol) ? "CNY" : "USD",
+        price: candles.at(-1)?.c ?? null,
+        previousClose: candles.at(-2)?.c ?? null,
+        shortName: symbol,
+        longName: symbol,
+        exchange: null,
+        instrumentType: null,
+        candles,
+      };
+      await writeStoredSeries(symbol, range, series);
+      return series;
+    } catch {
+      // Try the legacy endpoint before reporting the original Yahoo error.
+    }
+  }
+  return null;
+}
+
 /** Yahoo Finance chart endpoint — free, no API key [默认方案，可调整] */
 export async function fetchSeries(
   symbol: string,
@@ -57,8 +152,33 @@ export async function fetchSeries(
     symbol,
   )}?range=${range}&interval=${interval}&includePrePost=false`;
 
-  const res = await fetch(url, { headers: { "User-Agent": UA, Accept: "application/json" } });
-  if (!res.ok) throw new Error(`行情源返回 ${res.status}`);
+  let res: Response;
+  try {
+    res = await fetch(url, { headers: { "User-Agent": UA, Accept: "application/json" } });
+  } catch (error) {
+    const fallback = await fetchFmpSeries(symbol, range);
+    if (fallback) return fallback;
+    const stored = await readStoredSeries(symbol, range);
+    if (stored) return stored;
+    const seed = getSeedSeries(symbol);
+    if (seed) {
+      await writeStoredSeries(symbol, range, seed);
+      return seed;
+    }
+    throw error;
+  }
+  if (!res.ok) {
+    const fallback = await fetchFmpSeries(symbol, range);
+    if (fallback) return fallback;
+    const stored = await readStoredSeries(symbol, range);
+    if (stored) return stored;
+    const seed = getSeedSeries(symbol);
+    if (seed) {
+      await writeStoredSeries(symbol, range, seed);
+      return seed;
+    }
+    throw new Error(`行情源返回 ${res.status}`);
+  }
   const json = (await res.json()) as {
     chart?: {
       result?: {
@@ -80,7 +200,18 @@ export async function fetchSeries(
   };
 
   const result = json.chart?.result?.[0];
-  if (!result) throw new Error(json.chart?.error?.description ?? "无行情数据");
+  if (!result) {
+    const fallback = await fetchFmpSeries(symbol, range);
+    if (fallback) return fallback;
+    const stored = await readStoredSeries(symbol, range);
+    if (stored) return stored;
+    const seed = getSeedSeries(symbol);
+    if (seed) {
+      await writeStoredSeries(symbol, range, seed);
+      return seed;
+    }
+    throw new Error(json.chart?.error?.description ?? "无行情数据");
+  }
 
   const q = result.indicators?.quote?.[0] ?? {};
   const ts = result.timestamp ?? [];
@@ -97,7 +228,7 @@ export async function fetchSeries(
     });
   }
 
-  return {
+  const series: SeriesResult = {
     symbol,
     currency: result.meta?.currency ?? null,
     price: result.meta?.regularMarketPrice ?? candles.at(-1)?.c ?? null,
@@ -108,6 +239,8 @@ export async function fetchSeries(
     instrumentType: result.meta?.instrumentType ?? null,
     candles,
   };
+  await writeStoredSeries(symbol, range, series);
+  return series;
 }
 
 export type DailyChange = { date: string; changePct: number | null; close: number };

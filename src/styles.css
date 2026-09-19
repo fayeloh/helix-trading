@@ -193,6 +193,15 @@
   }
 }
 
+.briefing-nav {
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.briefing-nav::-webkit-scrollbar {
+  display: none;
+}
+
 /* 数值更新时的一次性底色闪烁 */
 @utility flash-up {
   animation: helix-flash-up 400ms ease-out 1;

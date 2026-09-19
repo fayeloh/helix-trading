@@ -4,6 +4,7 @@ import {
   dailyChanges,
   fetchSeries,
   readCache,
+  readStaleCache,
   writeCache,
   type Candle,
   type DailyChange,
@@ -64,6 +65,12 @@ export async function getIndexBoardData(defs?: BoardDef[]): Promise<IndexBoard> 
       }
     }),
   );
+
+  const hasUsableRows = rows.some((row) => row.days.length > 0 || row.price != null);
+  if (!hasUsableRows) {
+    const stale = await readStaleCache<IndexBoard>(cacheKey);
+    if (stale) return stale;
+  }
 
   const board: IndexBoard = { rows, fetchedAt: new Date().toISOString() };
   await writeCache(cacheKey, board, 600);
