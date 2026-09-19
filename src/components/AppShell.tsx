@@ -6,14 +6,6 @@ import { useEffect } from "react";
 import { DisclaimerBanner } from "@/components/Disclaimer";
 import { NAV, isNavActive } from "@/components/nav-items";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { useAccounts } from "@/hooks/useAccounts";
 import { useAuth } from "@/hooks/useAuth";
 import { useLang } from "@/lib/i18n";
 
@@ -64,7 +56,9 @@ export function AppShell({ children }: { children: ReactNode }) {
                       : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground"
                   }`}
                 >
-                  <item.icon className={`size-3.5 ${active ? "text-primary" : ""}`} />
+                  <item.icon
+                    className={`size-3.5 ${active ? "text-primary" : ""}`}
+                  />
                   {t(item.key)}
                 </Link>
               );
@@ -73,7 +67,6 @@ export function AppShell({ children }: { children: ReactNode }) {
 
           <div className="ml-auto flex items-center gap-2">
             <LangSwitcher />
-            <AccountSwitcher />
             <Button
               variant="ghost"
               size="icon"
@@ -86,7 +79,6 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         </div>
       </header>
-
 
       <main className="mx-auto max-w-[1400px] px-4 py-6">{children}</main>
 
@@ -120,38 +112,5 @@ function LangSwitcher() {
         </button>
       ))}
     </div>
-
-  );
-}
-
-function AccountSwitcher() {
-  const { accounts, activeAccountId, setActiveAccountId } = useAccounts();
-  const { t } = useLang();
-
-  if (accounts.length === 0) {
-    return (
-      <Link
-        to="/accounts"
-        className="inline-flex h-[30px] items-center rounded-sm border border-dashed border-border px-2.5 text-xs text-muted-foreground hover:border-primary/50 hover:text-primary"
-      >
-        {t("shell.newAccount")}
-      </Link>
-    );
-  }
-
-  return (
-    <Select value={activeAccountId ?? ""} onValueChange={setActiveAccountId}>
-      <SelectTrigger className="h-[30px] w-[170px] rounded-sm text-xs">
-        <SelectValue placeholder="选择账户" />
-      </SelectTrigger>
-
-      <SelectContent>
-        {accounts.map((a) => (
-          <SelectItem key={a.id} value={a.id} className="text-xs">
-            {a.name} · {a.base_currency}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
   );
 }

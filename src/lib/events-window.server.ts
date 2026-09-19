@@ -82,6 +82,8 @@ export async function getEventsWindow(input: {
       source: forecast.source,
       url: forecast.source_url,
       future: new Date(forecast.expected_date).getTime() > now,
+      price_change_24h_pct: null,
+      forecast_impact: "neutral",
     });
   }
   for (const f of facts) {
@@ -95,6 +97,8 @@ export async function getEventsWindow(input: {
       source: "Nasdaq / SEC",
       url: null,
       future: false,
+      price_change_24h_pct: null,
+      forecast_impact: "neutral",
     });
   }
 

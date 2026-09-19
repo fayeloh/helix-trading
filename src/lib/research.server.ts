@@ -62,7 +62,7 @@ export const BULL_CASE_SCHEMA = {
 
 export const BEAR_CASE_SCHEMA = BULL_CASE_SCHEMA;
 
-const FUNDAMENTALS_SCHEMA = {
+export const FUNDAMENTALS_SCHEMA = {
   type: "object",
   additionalProperties: false,
   required: [
@@ -620,44 +620,21 @@ export async function generateResearchSection(input: {
       user: `${commonUser}\n请输出该标的对应模块的分析。`,
     });
 
-  let ai: Record<string, unknown>;
-  let debateTrace: unknown = undefined;
-  if (input.section === "fundamentals") {
-    const debateBase = `${guardrails(input.lang)}\n${cfg.system}\n你是多智能体研究 Harness 的一名独立分析员。只使用下方 grounding facts，不得补充外部知识。`;
-    const runPerspective = (role: "bull" | "bear") =>
-      aiJson<DebateCase>({
-        model: AI_MODEL_FAST,
-        schemaName: `${role}_fundamentals_case`,
-        schema: role === "bull" ? BULL_CASE_SCHEMA : BEAR_CASE_SCHEMA,
-        system: `${debateBase}\n${role === "bull" ? "尽可能挖掘乐观论据、潜在机会和可能的正向触发条件。" : "尽可能挖掘风险、脆弱点和可能的负向触发条件。"}`,
-        user: `${commonUser}\n请输出 ${role === "bull" ? "Bull" : "Bear"} case；每条 claim 必须标注事实/推演与来源。`,
-      });
-    const result = await runDebateHarness({
-      bull: runPerspective.bind(null, "bull"),
-      bear: runPerspective.bind(null, "bear"),
-      synthesize: (bull, bear) =>
-        aiJson<Record<string, unknown>>({
-          model: AI_MODEL_DEEP,
-          schemaName: "research_fundamentals_synthesized",
-          schema: FUNDAMENTALS_SCHEMA,
-          system: `${guardrails(input.lang)}\n${cfg.system}\n你是 Synthesizer。综合 Bull 与 Bear 两份分析，只能保留 grounding facts 能支持的事实；冲突时降低 confidence，禁止编造。`,
-          user: `${commonUser}\n\nBull case:\n${JSON.stringify(bull)}\n\nBear case:\n${JSON.stringify(bear)}\n请输出完整 fundamentals 结构。`,
-        }),
-      fallback: singleCall,
-      verify: (output) =>
-        verifyAgainstFacts(output, {
-          resolved,
-          verifiedProfile,
-          computed,
-          grounding,
-        }),
-      synthesizerModel: AI_MODEL_DEEP,
-    });
-    ai = result.output;
-    debateTrace = result.trace;
-  } else {
-    ai = await singleCall();
-  }
+  const result =
+    input.section === "fundamentals"
+      ? await generateFundamentalsFromSnapshot(
+          {
+            commonUser,
+            grounding,
+            resolved,
+            verifiedProfile,
+            lang: input.lang,
+          },
+          "multi-agent",
+        )
+      : { output: await singleCall(), trace: undefined };
+  const ai = result.output;
+  const debateTrace = result.trace;
 
   if (input.section === "fundamentals" && verifiedProfile) {
     const generated = ai["company_profile"];
@@ -690,4 +667,55 @@ export async function generateResearchSection(input: {
     _facts: computed,
     ...(debateTrace ? { _debate: debateTrace } : {}),
   };
+}
+
+/** The same frozen input and prompts can be run through both paths by the offline evaluator. */
+export async function generateFundamentalsFromSnapshot(
+  snapshot: {
+    commonUser: string;
+    grounding: string;
+    resolved: Awaited<ReturnType<typeof resolveSymbol>>;
+    verifiedProfile: CompanyProfileData;
+    lang: OutputLang;
+  },
+  mode: "single-call" | "multi-agent",
+) {
+  const cfg = SCHEMAS.fundamentals;
+  const { commonUser, grounding, resolved, verifiedProfile, lang } = snapshot;
+  const singleCall = () =>
+    aiJson<Record<string, unknown>>({
+      model: AI_MODEL_DEEP,
+      schemaName: "research_fundamentals",
+      schema: cfg.schema,
+      system: `${guardrails(lang)}\n${cfg.system}`,
+      user: `${commonUser}\n请输出该标的对应模块的分析。`,
+    });
+  if (mode === "single-call")
+    return { output: await singleCall(), trace: undefined };
+  const debateBase = `${guardrails(lang)}\n${cfg.system}\n你是多智能体研究 Harness 的一名独立分析员。只使用下方 grounding facts，不得补充外部知识。`;
+  const runPerspective = (role: "bull" | "bear") =>
+    aiJson<DebateCase>({
+      model: AI_MODEL_FAST,
+      schemaName: `${role}_fundamentals_case`,
+      schema: role === "bull" ? BULL_CASE_SCHEMA : BEAR_CASE_SCHEMA,
+      system: `${debateBase}\n${role === "bull" ? "尽可能挖掘乐观论据、潜在机会和可能的正向触发条件。" : "尽可能挖掘风险、脆弱点和可能的负向触发条件。"}`,
+      user: `${commonUser}\n请输出 ${role === "bull" ? "Bull" : "Bear"} case；每条 claim 必须标注事实/推演与来源。`,
+    });
+  const result = await runDebateHarness({
+    bull: () => runPerspective("bull"),
+    bear: () => runPerspective("bear"),
+    synthesize: (bull, bear, violations) =>
+      aiJson<Record<string, unknown>>({
+        model: AI_MODEL_DEEP,
+        schemaName: "research_fundamentals_synthesized",
+        schema: FUNDAMENTALS_SCHEMA,
+        system: `${guardrails(lang)}\n${cfg.system}\n你是 Synthesizer。综合 Bull 与 Bear 两份分析，只能保留 grounding facts 能支持的事实；冲突时降低 confidence，禁止编造。`,
+        user: `${commonUser}\n\nBull case:\n${JSON.stringify(bull)}\n\nBear case:\n${JSON.stringify(bear)}\n${violations?.length ? `上次输出的事实校验失败，以下字段不能作为事实重复输出；没有可靠证据则改为推演或留空：${JSON.stringify(violations)}\n` : ""}请输出完整 fundamentals 结构。`,
+      }),
+    fallback: singleCall,
+    verify: (output) =>
+      verifyAgainstFacts(output, { resolved, verifiedProfile, grounding }),
+    synthesizerModel: AI_MODEL_DEEP,
+  });
+  return result;
 }

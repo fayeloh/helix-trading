@@ -14,6 +14,8 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "verify": "npm run lint:harness && npm run typecheck && npm test",
+    "eval:record": "HELIX_RECORD=1 node --env-file=.env.local ./node_modules/vitest/vitest.mjs run eval/record.test.ts",
+    "eval:live": "HELIX_LIVE_EVAL=1 node --env-file=.env.local ./node_modules/vitest/vitest.mjs run eval/live.test.ts",
     "format": "prettier --write ."
   },
   "overrides": {

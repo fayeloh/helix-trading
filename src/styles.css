@@ -2,6 +2,18 @@
 @source "../src";
 @import "tw-animate-css";
 
+@keyframes kimi-globe-rotate { from { transform: rotateY(-18deg) rotateX(9deg); } to { transform: rotateY(342deg) rotateX(9deg); } }
+@keyframes kimi-globe-pulse { 0%,100% { opacity: .55; } 50% { opacity: .95; } }
+.kimi-globe { transform-style: preserve-3d; animation: kimi-globe-rotate 24s linear infinite; }
+.kimi-globe-dots { background: radial-gradient(circle at 24% 26%,rgba(62,255,172,.95) 0 1px,transparent 1.5px), radial-gradient(circle at 32% 20%,rgba(62,255,172,.8) 0 1px,transparent 1.5px), radial-gradient(circle at 48% 28%,rgba(62,255,172,.7) 0 1px,transparent 1.5px), radial-gradient(circle at 72% 34%,rgba(62,255,172,.75) 0 1px,transparent 1.5px), radial-gradient(circle at 80% 50%,rgba(62,255,172,.8) 0 1px,transparent 1.5px), radial-gradient(circle at 68% 66%,rgba(62,255,172,.65) 0 1px,transparent 1.5px), radial-gradient(circle at 32% 75%,rgba(62,255,172,.72) 0 1px,transparent 1.5px), radial-gradient(circle at 22% 58%,rgba(62,255,172,.75) 0 1px,transparent 1.5px), repeating-radial-gradient(ellipse at 48% 48%,rgba(52,224,179,.8) 0 1px,transparent 1.6px 7px); mask-image: radial-gradient(circle,#000 0 68%,transparent 72%); animation: kimi-globe-pulse 4s ease-in-out infinite; }
+.kimi-globe-latitude { border: 1px solid rgba(75,177,170,.2); box-shadow: inset 0 0 24px rgba(32,168,157,.12); transform: rotateX(58deg) scaleY(.68); }
+.kimi-globe-orbit { border: 1px solid rgba(84,215,197,.28); transform: rotateX(68deg) rotateZ(-15deg); box-shadow: 0 0 13px rgba(84,215,197,.16); }
+.kimi-marker { display: block; width: 9px; height: 9px; border-radius: 999px; border: 2px solid #071019; box-shadow: 0 0 12px currentColor; }
+.kimi-marker-up { background: #33f39a; color: #33f39a; } .kimi-marker-down { background: #ff5966; color: #ff5966; }
+.kimi-label { position: absolute; left: 10px; top: -15px; white-space: nowrap; border: 1px solid; border-radius: 3px; padding: 3px 5px; font-size: 9px; background: rgba(7,16,25,.88); }
+.kimi-label b { margin-left: 3px; } .kimi-label-up { color: #7af5bf; border-color: rgba(51,243,154,.35); } .kimi-label-down { color: #ff8790; border-color: rgba(255,89,102,.35); }
+.kimi-sparkline { display:block; width: 105px; height: 16px; opacity: .85; background: #33f39a; clip-path: polygon(0 64%,10% 44%,20% 55%,30% 20%,40% 40%,50% 30%,60% 70%,70% 48%,80% 60%,90% 35%,100% 52%,100% 60%,90% 43%,80% 68%,70% 56%,60% 78%,50% 38%,40% 48%,30% 28%,20% 63%,10% 52%,0 72%); }
+
 @keyframes helix-globe-spin { from { transform: rotateY(-18deg) rotateX(8deg); } to { transform: rotateY(342deg) rotateX(8deg); } }
 .helix-globe { transform-style: preserve-3d; background: radial-gradient(circle at 35% 28%, rgba(104,224,211,.35), transparent 14%), radial-gradient(circle at 65% 60%, rgba(30,108,126,.75), rgba(7,17,31,.98) 66%), linear-gradient(110deg, rgba(57,214,197,.65), transparent 26%, rgba(121,169,255,.35) 62%, transparent 85%); animation: helix-globe-spin 22s linear infinite; }
 .helix-globe-grid { opacity: .42; background: repeating-linear-gradient(0deg, transparent 0 19px, rgba(121,169,255,.38) 20px 21px), repeating-linear-gradient(90deg, transparent 0 24px, rgba(57,214,197,.38) 25px 26px); border-radius: 50%; transform: perspective(420px) rotateX(58deg) scaleY(.72); }

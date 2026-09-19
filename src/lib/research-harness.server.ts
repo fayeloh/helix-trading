@@ -94,7 +94,11 @@ async function runAgent(
 export async function runDebateHarness<T>(opts: {
   bull: () => Promise<DebateCase>;
   bear: () => Promise<DebateCase>;
-  synthesize: (bull: DebateCase, bear: DebateCase) => Promise<T>;
+  synthesize: (
+    bull: DebateCase,
+    bear: DebateCase,
+    violations?: VerificationViolation[],
+  ) => Promise<T>;
   fallback: () => Promise<T>;
   verify: (output: T) => VerificationResult;
   synthesizerModel: string;
@@ -128,6 +132,17 @@ export async function runDebateHarness<T>(opts: {
   if (ready) {
     try {
       output = await opts.synthesize(bull.output!, bear.output!);
+      const initial = opts.verify(output);
+      if (!initial.passed) {
+        output = await opts.synthesize(
+          bull.output!,
+          bear.output!,
+          initial.violations,
+        );
+        if (!opts.verify(output).passed) {
+          throw new Error("synthesizer fact verification failed after retry");
+        }
+      }
     } catch (error) {
       const message = errorMessage(error);
       output = await opts.fallback();
@@ -143,6 +158,13 @@ export async function runDebateHarness<T>(opts: {
     output = await opts.fallback();
   }
 
+  const verification = opts.verify(output);
+  if (!verification.passed) {
+    throw new Error(
+      `Research fact verification failed: ${verification.violations.map((v) => v.path).join(", ")}`,
+    );
+  }
+
   return {
     output,
     trace: {
@@ -152,7 +174,7 @@ export async function runDebateHarness<T>(opts: {
         bear,
         synthesizer,
       },
-      verifier_result: opts.verify(output),
+      verifier_result: verification,
       fallback_reason: finalFallbackReason,
     },
   };
@@ -160,7 +182,14 @@ export async function runDebateHarness<T>(opts: {
 
 const NUMERIC_OR_DATE =
   /(?:\d{4}[-/]\d{1,2}(?:[-/]\d{1,2})?|[-+]?\d[\d,.]*\s*%?)/g;
-const IGNORED_VERIFICATION_KEYS = new Set(["source", "source_url", "website"]);
+// Tickers are identifiers, not numeric measurements; symbol resolution has its own validation.
+const IGNORED_VERIFICATION_KEYS = new Set([
+  "source",
+  "source_url",
+  "website",
+  "ticker",
+  "exchange_ticker",
+]);
 
 function normalized(value: unknown): string {
   return (JSON.stringify(value) ?? String(value))

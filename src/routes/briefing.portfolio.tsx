@@ -218,7 +218,7 @@ function relTime(iso: string, lang: Lang): string {
 
 function BriefingPage() {
   const { user } = useAuth();
-  const { activeAccountId, activeAccount } = useAccounts();
+  const { activeAccountId } = useAccounts();
   const qc = useQueryClient();
   const listFn = useServerFn(listBriefings);
   const genFn = useServerFn(generateBriefing);
@@ -266,17 +266,12 @@ function BriefingPage() {
 
   const rows = list.data ?? [];
   const macro = rows.find((r) => r.briefing_type === "macro");
-  const portfolio = rows.find(
-    (r) => r.briefing_type === "portfolio" && r.account_id === activeAccountId,
-  );
-
   return (
     <AppShell>
       <div className="space-y-5">
         <div>
           <h1 className="text-xl font-semibold">{t.title}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {activeAccount?.name ? `${activeAccount.name} · ` : ""}
             {t.sub}
           </p>
         </div>
@@ -292,9 +287,6 @@ function BriefingPage() {
           <TabsList>
             <TabsTrigger value="macro" className="text-xs">
               {t.tabMacro}
-            </TabsTrigger>
-            <TabsTrigger value="portfolio" className="text-xs">
-              {t.tabPortfolio}
             </TabsTrigger>
           </TabsList>
 
@@ -321,29 +313,6 @@ function BriefingPage() {
             )}
           </TabsContent>
 
-          <TabsContent value="portfolio" className="mt-4 space-y-4">
-            <GenerateBar
-              label={t.portfolioLabel}
-              generatedAt={portfolio?.generated_at}
-              pending={generate.isPending}
-              lang={lang}
-              onGenerate={(force) => generate.mutate({ type: "portfolio", force })}
-            />
-            {portfolio ? (
-              <>
-                <LiveSections
-                  payload={portfolio.payload as BasePayload}
-                  lang={lang}
-                  recordingKey={recordingKey}
-                  onRecord={(key, data) => record.mutate({ key, briefingId: portfolio.id, data })}
-                />
-                <PortfolioExtras payload={portfolio.payload as PortfolioPayload} lang={lang} />
-                <Caveats payload={portfolio.payload as BasePayload} lang={lang} />
-              </>
-            ) : (
-              <EmptyHint text={t.empty} />
-            )}
-          </TabsContent>
         </Tabs>
       </div>
     </AppShell>

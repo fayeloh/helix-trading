@@ -5,6 +5,8 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { AI_MODEL_DEEP } from "./ai.server";
 import { generateResearchSection } from "./research.server";
 
+const FUNDAMENTALS_PIPELINE_VERSION = "fundamentals-debate-v2";
+
 export const getResearchSection = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) =>
@@ -36,13 +38,27 @@ export const getResearchSection = createServerFn({ method: "POST" })
         .limit(1);
       if (cached && cached.length > 0) {
         const row = cached[0];
-        const profile = data.section === "fundamentals" && row?.payload && typeof row.payload === "object" && !Array.isArray(row.payload)
-          ? row.payload["company_profile"]
-          : null;
+        const profile =
+          data.section === "fundamentals" &&
+          row?.payload &&
+          typeof row.payload === "object" &&
+          !Array.isArray(row.payload)
+            ? row.payload["company_profile"]
+            : null;
         const hasVerifiedIdentity =
           data.section !== "fundamentals" ||
-          (profile && typeof profile === "object" && !Array.isArray(profile) && "legal_name" in profile && Boolean(profile["legal_name"]));
-        if (row && hasVerifiedIdentity) return row;
+          (profile &&
+            typeof profile === "object" &&
+            !Array.isArray(profile) &&
+            "legal_name" in profile &&
+            Boolean(profile["legal_name"]));
+        const currentPipeline =
+          data.section !== "fundamentals" ||
+          (row?.payload &&
+            typeof row.payload === "object" &&
+            !Array.isArray(row.payload) &&
+            row.payload["_pipeline_version"] === FUNDAMENTALS_PIPELINE_VERSION);
+        if (row && hasVerifiedIdentity && currentPipeline) return row;
       }
     }
 
@@ -63,7 +79,9 @@ export const getResearchSection = createServerFn({ method: "POST" })
         section: data.section,
         lookback_days: data.lookbackDays,
         lang: data.lang,
-        payload: payload as never,
+        payload: (data.section === "fundamentals"
+          ? { ...payload, _pipeline_version: FUNDAMENTALS_PIPELINE_VERSION }
+          : payload) as never,
         model: AI_MODEL_DEEP,
         expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
       })

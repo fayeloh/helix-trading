@@ -48,7 +48,7 @@ function header(kicker, title, sub) {
 }
 
 function slide1() {
-  let b = header('01 / Multi-Agent', 'Fundamentals 研究已具备基本的多 Agent 编排', '从事实冻结开始，到可验证的 debate trace 输出，流程已经超过单模型调用。');
+  let b = header('01 / Multi-Agent', 'Fundamentals 已形成可回退、可验证的 Multi-Agent 路径', '先冻结事实，再并行生成 Bull / Bear，Synthesizer 经过事实校验重试；失败时回到单模型路径。');
   const y = 245, h = 104;
   const boxes = [
     [68, '事实数据', '获取并冻结\n行情与基本面事实', C.blue],
@@ -69,7 +69,7 @@ function slide1() {
   b += line(311, 238, 311, 245, C.teal, 1.5); b += line(483, 238, 483, 245, C.teal, 1.5); b += line(311, 238, 483, 238, C.teal, 1.5);
   b += rect(68, 416, 1144, 154, C.panel2, { line: C.line, lineWidth: 1 });
   b += tx(92, 438, 220, 26, '编排特征', 16, C.teal, { bold: true });
-  b += tx(92, 478, 1040, 60, 'Fast model 负责两侧分析，Deep model 负责综合；每个阶段都有超时与失败处理。\nSynthesizer 失败时回退到原来的单模型调用，结果仍保留可追踪的 _debate 记录。', 18, C.text);
+  b += tx(92, 478, 1040, 60, 'Fast model 负责两侧分析，Deep model 负责综合；每个阶段都有超时与失败处理。\n事实校验失败先把违规项反馈给 Synthesizer 重试，仍失败则回退到单模型调用，并保留 _debate 记录。', 18, C.text);
   b += tx(1100, 438, 80, 26, '已落地', 14, C.green, { bold: true, align: 'r' });
   return slideXml(b);
 }
@@ -82,7 +82,7 @@ function slide2() {
     ['并行调度', 'Bull / Bear 同时运行，缩短研究等待时间', C.green],
     ['Synthesizer 阶段', '把分歧显式交给深度模型综合，而不是简单拼接', C.teal],
     ['Fallback 路径', '综合失败时回到原单模型调用，保证可用性', C.red],
-    ['验证器与 trace', 'verifyAgainstFacts + _debate 记录，支持复盘与测试', C.white],
+    ['验证器与 trace', '事实重试、verifyAgainstFacts 与 _debate 记录', C.white],
   ];
   let y = 216;
   for (let i = 0; i < items.length; i++) {
@@ -96,7 +96,7 @@ function slide2() {
   }
   b += rect(68, 565, 1144, 72, '0E2330', { line: C.teal, lineWidth: 1.5 });
   b += tx(92, 578, 320, 30, '最小工程闭环', 18, C.teal, { bold: true });
-  b += tx(360, 578, 820, 30, 'npm run verify ＝ Harness lint → typecheck → 82 tests 全部通过', 18, C.text, { bold: true });
+  b += tx(360, 578, 820, 30, 'npm run verify ＝ Harness lint → typecheck → 87 tests 通过（8 文件，2 个可选用例默认跳过）', 17, C.text, { bold: true });
   return slideXml(b);
 }
 
@@ -119,10 +119,10 @@ function slide3() {
   for (let i=0;i<nodes.length-1;i++) b += line(nodes[i][0]+160, y+60, nodes[i+1][0], y+60, C.teal, 2);
   b += tx(68, 202, 1140, 24, '一条入口，多条研究策略', 17, C.teal, { bold: true });
   b += rect(68, 430, 1144, 142, C.panel2, { line: C.line, lineWidth: 1 });
-  b += tx(92, 452, 260, 24, '最小可执行闭环', 16, C.teal, { bold: true });
-  b += tx(92, 490, 790, 55, '统一事实输入 → Bull / Bear → Synthesizer → Verifier → fallback\n结果带有 _debate trace，并由 npm run verify 在提交前自动检查。', 18, C.text);
-  b += tx(930, 452, 250, 24, '当前验收结果', 14, C.muted, { align: 'r' });
-  b += tx(930, 488, 250, 52, '7 个测试文件\n82 项测试通过', 17, C.green, { bold: true, align: 'r' });
+  b += tx(92, 452, 260, 24, '生产链路', 16, C.teal, { bold: true });
+  b += tx(92, 490, 760, 55, '统一事实输入 → Bull / Bear → Synthesizer → Verifier → fallback\n结果带有 _debate trace，并由 npm run verify 在提交前自动检查。', 18, C.text);
+  b += tx(930, 452, 250, 24, '离线评测', 14, C.muted, { align: 'r' });
+  b += tx(930, 488, 250, 52, 'golden fixture\n同快照 baseline / debate', 17, C.green, { bold: true, align: 'r' });
   return slideXml(b);
 }
 
@@ -138,7 +138,7 @@ const files = {
   'ppt/slideLayouts/slideLayout1.xml': xml(`<p:sldLayout xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" type="blank"><p:cSld name="Blank"><p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr/></p:spTree></p:cSld><p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr></p:sldLayout>`),
   'ppt/slideLayouts/_rels/slideLayout1.xml.rels': xml(`<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideMaster" Target="../slideMasters/slideMaster1.xml"/></Relationships>`),
   'ppt/theme/theme1.xml': xml(`<a:theme xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" name="Helix"><a:themeElements><a:clrScheme name="Helix"><a:dk1><a:srgbClr val="000000"/></a:dk1><a:lt1><a:srgbClr val="FFFFFF"/></a:lt1><a:dk2><a:srgbClr val="0B1220"/></a:dk2><a:lt2><a:srgbClr val="F5FAFF"/></a:lt2><a:accent1><a:srgbClr val="39D6C5"/></a:accent1><a:accent2><a:srgbClr val="79A9FF"/></a:accent2><a:accent3><a:srgbClr val="F6B65B"/></a:accent3><a:accent4><a:srgbClr val="FF7C8A"/></a:accent4><a:accent5><a:srgbClr val="74E39B"/></a:accent5><a:accent6><a:srgbClr val="9FB3C8"/></a:accent6><a:hlink><a:srgbClr val="39D6C5"/></a:hlink><a:folHlink><a:srgbClr val="79A9FF"/></a:folHlink></a:clrScheme><a:fontScheme name="Helix"><a:majorFont><a:latin typeface="Microsoft YaHei"/></a:majorFont><a:minorFont><a:latin typeface="Microsoft YaHei"/></a:minorFont></a:fontScheme><a:fmtScheme name="Helix"><a:fillStyleLst/><a:lnStyleLst/><a:effectStyleLst/><a:bgFillStyleLst/></a:fmtScheme></a:themeElements></a:theme>`),
-  'docProps/core.xml': xml(`<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/"><dc:title>Helix Trading Multi-Agent Research</dc:title><dc:creator>Helix Trading</dc:creator><dc:description>路演材料：Multi-Agent、Harness 与应用层工作流</dc:description></cp:coreProperties>`),
+  'docProps/core.xml': xml(`<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/"><dc:title>Helix Trading Multi-Agent Research</dc:title><dc:creator>Helix Trading</dc:creator><dc:description>路演材料：Multi-Agent、Harness、离线评测与应用层工作流</dc:description></cp:coreProperties>`),
   'docProps/app.xml': xml(`<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties"><Application>Microsoft PowerPoint</Application><PresentationFormat>Widescreen</PresentationFormat><Slides>3</Slides></Properties>`),
 };
 for (let i=0;i<slides.length;i++) { files[`ppt/slides/slide${i+1}.xml`] = slides[i]; files[`ppt/slides/_rels/slide${i+1}.xml.rels`] = slideRel(); }

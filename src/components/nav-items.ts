@@ -1,5 +1,4 @@
 import {
-  BookOpenCheck,
   CandlestickChart,
   LayoutDashboard,
   Newspaper,
@@ -12,7 +11,6 @@ export const NAV = [
   { to: "/briefing", key: "nav.briefing", icon: Newspaper },
   { to: "/markets", key: "nav.markets", icon: CandlestickChart },
   { to: "/research", key: "nav.research", icon: Search },
-  { to: "/journal", key: "nav.journal", icon: BookOpenCheck },
 ] as const;
 
 export function isNavActive(to: string, pathname: string) {

@@ -6,6 +6,120 @@ type Seed = { currency: string; rows: [string, number][] };
 // offline safety net only; live multi-source data and stored database history
 // take precedence whenever available.
 const SEEDS: Record<string, Seed> = {
+  // 离线回退：板块轮动在外部行情源暂时不可达时仍保持可展示。
+  // 这些快照只用于开发/网络故障兜底，实时源成功时优先使用实时数据。
+  SOXX: {
+    currency: "USD",
+    rows: [
+      ["2026-09-17", 690],
+      ["2026-09-18", 696.21],
+    ],
+  },
+  XLK: {
+    currency: "USD",
+    rows: [
+      ["2026-09-17", 250],
+      ["2026-09-18", 251.75],
+    ],
+  },
+  XLF: {
+    currency: "USD",
+    rows: [
+      ["2026-09-17", 52],
+      ["2026-09-18", 51.64],
+    ],
+  },
+  XLE: {
+    currency: "USD",
+    rows: [
+      ["2026-09-17", 96],
+      ["2026-09-18", 97.06],
+    ],
+  },
+  XLV: {
+    currency: "USD",
+    rows: [
+      ["2026-09-17", 145],
+      ["2026-09-18", 144.28],
+    ],
+  },
+  XLI: {
+    currency: "USD",
+    rows: [
+      ["2026-09-17", 137],
+      ["2026-09-18", 137.55],
+    ],
+  },
+  XLY: {
+    currency: "USD",
+    rows: [
+      ["2026-09-17", 225],
+      ["2026-09-18", 223.2],
+    ],
+  },
+  XLP: {
+    currency: "USD",
+    rows: [
+      ["2026-09-17", 82],
+      ["2026-09-18", 82.41],
+    ],
+  },
+  XLU: {
+    currency: "USD",
+    rows: [
+      ["2026-09-17", 81],
+      ["2026-09-18", 81.65],
+    ],
+  },
+  XLRE: {
+    currency: "USD",
+    rows: [
+      ["2026-09-17", 42],
+      ["2026-09-18", 41.79],
+    ],
+  },
+  "3033.HK": {
+    currency: "HKD",
+    rows: [
+      ["2026-09-17", 5.1],
+      ["2026-09-18", 5.15],
+    ],
+  },
+  "^HSNF": {
+    currency: "HKD",
+    rows: [
+      ["2026-09-17", 14500],
+      ["2026-09-18", 14572.5],
+    ],
+  },
+  "^HSNP": {
+    currency: "HKD",
+    rows: [
+      ["2026-09-17", 18200],
+      ["2026-09-18", 18090.8],
+    ],
+  },
+  "^HSNU": {
+    currency: "HKD",
+    rows: [
+      ["2026-09-17", 3800],
+      ["2026-09-18", 3819],
+    ],
+  },
+  "^HSNC": {
+    currency: "HKD",
+    rows: [
+      ["2026-09-17", 4200],
+      ["2026-09-18", 4242],
+    ],
+  },
+  "^HSCE": {
+    currency: "HKD",
+    rows: [
+      ["2026-09-17", 8500],
+      ["2026-09-18", 8457.5],
+    ],
+  },
   "^GSPC": {
     currency: "USD",
     rows: [

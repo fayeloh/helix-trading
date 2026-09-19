@@ -52,6 +52,23 @@ describe("runDebateHarness", () => {
     expect(synthesize).not.toHaveBeenCalled();
   });
 
+  it("falls back when an analyst times out without waiting for the pending task", async () => {
+    const fallback = vi.fn(async () => ({ value: 7 }));
+    const result = await runDebateHarness({
+      bull: () => new Promise<DebateCase>(() => {}),
+      bear: async () => debateCase,
+      synthesize: async () => ({ value: 42 }),
+      fallback,
+      verify: () => ({ passed: true, checked_values: 0, violations: [] }),
+      synthesizerModel: "deep",
+      timeoutMs: 5,
+    });
+    expect(result.output.value).toBe(7);
+    expect(result.trace.architecture).toBe("single-call-fallback");
+    expect(result.trace.fallback_reason).toContain("timed out");
+    expect(fallback).toHaveBeenCalledOnce();
+  });
+
   it("falls back when synthesis fails", async () => {
     const fallback = vi.fn(async () => ({ value: 7 }));
     const result = await runDebateHarness({
@@ -70,6 +87,45 @@ describe("runDebateHarness", () => {
     expect(result.trace.agents.synthesizer.status).toBe("failed");
     expect(result.trace.fallback_reason).toContain("invalid structured output");
     expect(fallback).toHaveBeenCalledOnce();
+  });
+
+  it("retries an ungrounded synthesis with violations", async () => {
+    const synthesize = vi
+      .fn()
+      .mockResolvedValueOnce({ claims: [{ kind: "fact", text: "Growth 99%" }] })
+      .mockResolvedValueOnce({
+        claims: [{ kind: "fact", text: "Growth 25%" }],
+      });
+    const fallback = vi.fn();
+    const result = await runDebateHarness({
+      bull: async () => debateCase,
+      bear: async () => debateCase,
+      synthesize,
+      fallback,
+      verify: (output) => verifyAgainstFacts(output, { growth: "25%" }),
+      synthesizerModel: "deep",
+    });
+    expect(result.trace.verifier_result.passed).toBe(true);
+    expect(synthesize).toHaveBeenCalledTimes(2);
+    expect(synthesize.mock.calls[1]?.[2]?.[0]?.value).toBe("99%");
+    expect(fallback).not.toHaveBeenCalled();
+  });
+
+  it("rejects ungrounded output even after fallback", async () => {
+    await expect(
+      runDebateHarness({
+        bull: async () => debateCase,
+        bear: async () => debateCase,
+        synthesize: async () => ({
+          claims: [{ kind: "fact", text: "Growth 99%" }],
+        }),
+        fallback: async () => ({
+          claims: [{ kind: "fact", text: "Growth 88%" }],
+        }),
+        verify: (output) => verifyAgainstFacts(output, { growth: "25%" }),
+        synthesizerModel: "deep",
+      }),
+    ).rejects.toThrow("Research fact verification failed");
   });
 });
 
@@ -104,6 +160,18 @@ describe("verifyAgainstFacts", () => {
       { revenue_growth: "25%" },
     );
 
+    expect(result).toEqual({ passed: true, checked_values: 0, violations: [] });
+  });
+
+  it("does not confuse numeric ticker identifiers with unsupported facts", () => {
+    const result = verifyAgainstFacts(
+      {
+        peer_comparison: [
+          { kind: "fact", ticker: "005930.KS", note: "verified peer" },
+        ],
+      },
+      { profile: "AAPL" },
+    );
     expect(result).toEqual({ passed: true, checked_values: 0, violations: [] });
   });
 });

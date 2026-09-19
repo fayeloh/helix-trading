@@ -1,0 +1,681 @@
+{
+  "generated_at": "2026-09-19T18:59:55.687Z",
+  "metric_scope": "numeric/date fact claims and masked-null traps only; not semantic groundedness",
+  "fixtures": [
+    {
+      "symbol": "AAPL",
+      "single-call": {
+        "score": {
+          "checked_numeric_date_claims": 11,
+          "unsupported_numeric_date_claims": 1,
+          "numeric_groundedness": 0.9090909090909091,
+          "known_traps": 1,
+          "fabricated_traps": [],
+          "violations": [
+            {
+              "path": "company_profile.market_cap",
+              "value": "4.94",
+              "reason": "not present in grounding facts"
+            }
+          ]
+        },
+        "output": {
+          "business_lines": [
+            {
+              "as_of": "2026-09-19",
+              "kind": "fact",
+              "name": "Electronic Devices",
+              "note": "包括 iPhone、Mac、iPad、以及其他硬件产品。",
+              "revenue_share_pct": null,
+              "source": "SEC EDGAR submissions"
+            },
+            {
+              "as_of": "2026-09-19",
+              "kind": "fact",
+              "name": "Services",
+              "note": "包含数字内容、云服务、支付解决方案和订阅服务。",
+              "revenue_share_pct": null,
+              "source": "SEC EDGAR submissions"
+            },
+            {
+              "as_of": "2026-09-19",
+              "kind": "fact",
+              "name": "Accessories",
+              "note": "例如 Apple Watch 和其他配件。",
+              "revenue_share_pct": null,
+              "source": "SEC EDGAR submissions"
+            }
+          ],
+          "business_model": "Apple Inc. 是一家通过设计、制造和销售技术设备、创新服务和软件生态系统以吸引消费者和企业客户的公司。该公司在硬件和订阅服务领域深入布局，形成多渠道销售战略。",
+          "caveats": "分析基于截至 2026-09-19 的数据，涉及未来预测时可能有数据滞后情况。",
+          "company_profile": {
+            "as_of": "2026-09-19",
+            "employees": null,
+            "exchange_ticker": "Nasdaq: AAPL",
+            "founded": "1980-12-12",
+            "headquarters": "CUPERTINO, CA",
+            "industry": "Electronic Computers",
+            "kind": "fact",
+            "legal_name": "Apple Inc.",
+            "market_cap": "4.94T",
+            "sector": "Technology",
+            "source": "SEC EDGAR submissions + Yahoo Finance chart metadata + Financial Modeling Prep /profile",
+            "summary": "Apple Inc. 是一家全球性技术公司，专注于设计、制造和销售一系列电子设备。主要产品包括 iPhone 智能手机、Mac 个人电脑及多功能 iPad 平板电脑；以及一系列穿戴设备、智能家居产品及配件。此外，Apple 提供多种在线平台和订阅服务以及数字内容下载。总部位于美国加州库比蒂诺。",
+            "website": "https://www.apple.com"
+          },
+          "competition": [
+            {
+              "as_of": null,
+              "confidence": null,
+              "kind": "inference",
+              "source": null,
+              "text": "采用与 Apple 产品线重叠并具有强大市场地位的公司来分析其竞争环境。"
+            }
+          ],
+          "customers": [],
+          "differentiation": [
+            {
+              "as_of": null,
+              "confidence": "high",
+              "kind": "inference",
+              "source": null,
+              "text": "独特的生态系统提供了硬件、软件、服务和内容之间的无缝体验。"
+            },
+            {
+              "as_of": null,
+              "confidence": "high",
+              "kind": "inference",
+              "source": null,
+              "text": "通过其设计和质量建立的优质品牌形象增强了用户粘性。"
+            }
+          ],
+          "moat": [
+            {
+              "as_of": null,
+              "confidence": "high",
+              "kind": "inference",
+              "source": null,
+              "text": "受专利和品牌资产保护的庞大生态系统为公司建立了强大的壁垒。"
+            },
+            {
+              "as_of": null,
+              "confidence": "high",
+              "kind": "inference",
+              "source": null,
+              "text": "App Store生态锁定客户，为公司提供了长期持续收入来源。"
+            }
+          ],
+          "overview": "Apple Inc. 以其创新的技术产品和服务世界闻名。作为一家全球领先的技术公司，Apple 在电子设备市场和服务系统中深耕多年，并通过专利保护和品牌影响力保持了行业竞争力。",
+          "peer_comparison": [
+            {
+              "as_of": null,
+              "kind": "inference",
+              "metrics": [
+                {
+                  "edge": "target_better",
+                  "metric": "毛利率",
+                  "peer_value": "40.3%",
+                  "target_value": "43.3%"
+                },
+                {
+                  "edge": "peer_better",
+                  "metric": "市场占有率",
+                  "peer_value": "25%",
+                  "target_value": "20%"
+                }
+              ],
+              "note": "比较了Apple与主要竞争对手的关键财务指标。",
+              "peer": "Microsoft Corporation",
+              "source": "Yahoo Finance data and estimates",
+              "ticker": "MSFT"
+            }
+          ],
+          "product_lines": [],
+          "regions": [
+            {
+              "as_of": "2026-09-19",
+              "kind": "fact",
+              "name": "Americas",
+              "revenue_share_pct": null,
+              "source": "SEC EDGAR submissions"
+            },
+            {
+              "as_of": "2026-09-19",
+              "kind": "fact",
+              "name": "Europe",
+              "revenue_share_pct": null,
+              "source": "SEC EDGAR submissions"
+            },
+            {
+              "as_of": "2026-09-19",
+              "kind": "fact",
+              "name": "Greater China",
+              "revenue_share_pct": null,
+              "source": "SEC EDGAR submissions"
+            },
+            {
+              "as_of": "2026-09-19",
+              "kind": "fact",
+              "name": "Rest of Asia Pacific",
+              "revenue_share_pct": null,
+              "source": "SEC EDGAR submissions"
+            },
+            {
+              "as_of": "2026-09-19",
+              "kind": "fact",
+              "name": "Japan",
+              "revenue_share_pct": null,
+              "source": "SEC EDGAR submissions"
+            }
+          ],
+          "suppliers": [],
+          "weaknesses": [
+            {
+              "as_of": null,
+              "confidence": "medium",
+              "kind": "inference",
+              "source": null,
+              "text": "高度依赖 iPhone 销售的收入结构，使其容易受到该单一产品需求波动的影响。"
+            },
+            {
+              "as_of": null,
+              "confidence": "medium",
+              "kind": "inference",
+              "source": null,
+              "text": "国际市场面临着严格的合规要求和成本上升压力，以及与竞争对手的激烈价格竞争。"
+            }
+          ]
+        },
+        "duration_ms": 9974,
+        "architecture": "single-call"
+      },
+      "multi-agent": {
+        "score": {
+          "checked_numeric_date_claims": 8,
+          "unsupported_numeric_date_claims": 0,
+          "numeric_groundedness": 1,
+          "known_traps": 1,
+          "fabricated_traps": [],
+          "violations": []
+        },
+        "output": {
+          "business_lines": [
+            {
+              "as_of": "2026-09-19",
+              "kind": "fact",
+              "name": "Consumer Electronics",
+              "note": "Focus on hardware like iPhone, iPad, and Mac.",
+              "revenue_share_pct": null,
+              "source": "SEC EDGAR submissions + Yahoo Finance chart metadata + Financial Modeling Prep /profile"
+            },
+            {
+              "as_of": "2026-09-19",
+              "kind": "fact",
+              "name": "Digital Services",
+              "note": "Includes App store, subscription services, and cloud services.",
+              "revenue_share_pct": null,
+              "source": "SEC EDGAR submissions + Yahoo Finance chart metadata + Financial Modeling Prep /profile"
+            }
+          ],
+          "business_model": "Apple Inc. operates on a vertically integrated business model, designing, manufacturing, and selling hardware as well as offering related software and services.",
+          "caveats": "Market and company financials are sourced as of 2026-09-19, but real-time updates may lead to variances.",
+          "company_profile": {
+            "as_of": "2026-09-19",
+            "employees": null,
+            "exchange_ticker": "Nasdaq:AAPL",
+            "founded": "1980-12-12",
+            "headquarters": "CUPERTINO, CA",
+            "industry": "Electronic Computers",
+            "kind": "fact",
+            "legal_name": "Apple Inc.",
+            "market_cap": null,
+            "sector": "Technology",
+            "source": "SEC EDGAR submissions + Yahoo Finance chart metadata + Financial Modeling Prep /profile",
+            "summary": "Apple Inc. is a global technology corporation focusing on consumer electronics and software services, including the iPhone, Mac, iPad, and subscription services like iCloud and Apple Music. Apple fosters a holistic ecosystem combining hardware, software, and services to enhance user experience.",
+            "website": "https://www.apple.com"
+          },
+          "competition": [
+            {
+              "as_of": null,
+              "confidence": null,
+              "kind": "inference",
+              "source": null,
+              "text": "Apple's competitors include Samsung, Google, and Microsoft."
+            }
+          ],
+          "customers": [
+            {
+              "as_of": null,
+              "confidence": null,
+              "kind": "inference",
+              "source": null,
+              "text": "Apple's diversified customer base spans individual consumers, businesses, and government entities."
+            }
+          ],
+          "differentiation": [
+            {
+              "as_of": null,
+              "confidence": null,
+              "kind": "inference",
+              "source": null,
+              "text": "Apple's exclusive ecosystem of integrated devices and services creates strong customer retention."
+            }
+          ],
+          "moat": [
+            {
+              "as_of": null,
+              "confidence": null,
+              "kind": "inference",
+              "source": null,
+              "text": "Apple possesses a substantial brand value and product ecosystem that contributes to customer loyalty."
+            }
+          ],
+          "overview": "Comprehensive analysis of Apple Inc., its businesses, strengths, and market positioning.",
+          "peer_comparison": [
+            {
+              "as_of": null,
+              "kind": "inference",
+              "metrics": [
+                {
+                  "edge": "similar",
+                  "metric": "Market Capitalization",
+                  "peer_value": null,
+                  "target_value": null
+                },
+                {
+                  "edge": "unknown",
+                  "metric": "Revenue Growth Rate",
+                  "peer_value": null,
+                  "target_value": null
+                }
+              ],
+              "note": "Comparison based on similar technology giants.",
+              "peer": "Google",
+              "source": null,
+              "ticker": null
+            },
+            {
+              "as_of": null,
+              "kind": "inference",
+              "metrics": [
+                {
+                  "edge": "unknown",
+                  "metric": "Profit Margin",
+                  "peer_value": null,
+                  "target_value": null
+                }
+              ],
+              "note": "Includes competitor analysis for market share and product diversity.",
+              "peer": "Samsung",
+              "source": null,
+              "ticker": null
+            }
+          ],
+          "product_lines": [
+            {
+              "as_of": "2026-09-19",
+              "kind": "fact",
+              "name": "iPhone",
+              "note": "One of the primary hardware products of Apple Inc. Major revenue generator.",
+              "revenue_share_pct": null,
+              "source": "SEC EDGAR submissions + Yahoo Finance chart metadata + Financial Modeling Prep /profile"
+            },
+            {
+              "as_of": "2026-09-19",
+              "kind": "fact",
+              "name": "Apple Services",
+              "note": "Includes music, TV, game subscriptions, and cloud services.",
+              "revenue_share_pct": null,
+              "source": "SEC EDGAR submissions + Yahoo Finance chart metadata + Financial Modeling Prep /profile"
+            }
+          ],
+          "regions": [
+            {
+              "as_of": "2026-09-19",
+              "kind": "fact",
+              "name": "North America",
+              "revenue_share_pct": null,
+              "source": "SEC EDGAR submissions + Yahoo Finance chart metadata + Financial Modeling Prep /profile"
+            },
+            {
+              "as_of": "2026-09-19",
+              "kind": "fact",
+              "name": "Europe",
+              "revenue_share_pct": null,
+              "source": "SEC EDGAR submissions + Yahoo Finance chart metadata + Financial Modeling Prep /profile"
+            }
+          ],
+          "suppliers": [
+            {
+              "as_of": null,
+              "confidence": null,
+              "kind": "inference",
+              "source": null,
+              "text": "Suppliers include companies such as Foxconn for manufacturing and hardware components."
+            }
+          ],
+          "weaknesses": [
+            {
+              "as_of": null,
+              "confidence": null,
+              "kind": "inference",
+              "source": null,
+              "text": "High dependency on iPhone sales could expose the company to product-specific risks."
+            }
+          ]
+        },
+        "trace": {
+          "architecture": "multi-agent",
+          "agents": {
+            "bull": {
+              "status": "completed",
+              "duration_ms": 3632,
+              "output": {
+                "thesis": "Apple Inc. 在技术领域的强大竞争力和不断扩展的产品生态系统为其增长提供了可靠的支持，尽管面临市场挑战，但公司的多元化收入来源和创新能力仍然令人乐观。",
+                "claims": [
+                  {
+                    "text": "Apple Inc. 在2026年的市场价值已达到4936860972280美元，展示了公司在技术行业的市场领导地位。",
+                    "kind": "fact",
+                    "source": "SEC EDGAR submissions + Yahoo Finance chart metadata + Financial Modeling Prep /profile",
+                    "as_of": "2026-09-19",
+                    "confidence": "high"
+                  },
+                  {
+                    "text": "Apple Inc. 提供多样化的产品线，包括iPhone、Mac、iPad、AirPods等，这使得公司的收入来源广泛，降低了对单一产品的依赖。",
+                    "kind": "inference",
+                    "source": null,
+                    "as_of": null,
+                    "confidence": "high"
+                  },
+                  {
+                    "text": "Apple的生态系统通过实施多项订阅服务，如Apple Arcade、Apple Music和Apple TV+，提升了客户的粘性并持续增加了收入。",
+                    "kind": "inference",
+                    "source": null,
+                    "as_of": null,
+                    "confidence": "medium"
+                  },
+                  {
+                    "text": "Apple持续在研发方面投资，以推动技术创新和产品改进，这对于保持其在竞争激烈的市场中的优势至关重要。",
+                    "kind": "inference",
+                    "source": null,
+                    "as_of": null,
+                    "confidence": "medium"
+                  }
+                ],
+                "caveats": "数据截止到2026年，当前的市场情况及公司表现可能有所变动，需关注最新信息。"
+              }
+            },
+            "bear": {
+              "status": "completed",
+              "duration_ms": 5720,
+              "output": {
+                "thesis": "虽然苹果公司（AAPL）在技术行业中占有显著地位，但其营收增速放缓、产品依赖、高竞争压力以及法律和政策风险可能会影响未来的业绩表现。",
+                "claims": [
+                  {
+                    "text": "苹果的市场资本达到4936860972280美元，与某些竞争对手相比，市值相对较高，可能导致投资者对其增长潜力的期望偏高。",
+                    "kind": "fact",
+                    "source": "SEC EDGAR submissions + Yahoo Finance chart metadata + Financial Modeling Prep /profile",
+                    "as_of": "2026-09-19",
+                    "confidence": null
+                  },
+                  {
+                    "text": "根据公开数据，苹果的营收依赖于iPhone等核心产品，过于依赖单一产品可能使其在市场变化时面临更高风险。",
+                    "kind": "inference",
+                    "source": null,
+                    "as_of": null,
+                    "confidence": "high"
+                  },
+                  {
+                    "text": "技术行业竞争持续加剧，许多新兴科技公司和现有竞争对手不断推出创新产品，可能侵蚀苹果的市场份额。",
+                    "kind": "inference",
+                    "source": null,
+                    "as_of": null,
+                    "confidence": "medium"
+                  },
+                  {
+                    "text": "苹果面临来自各种司法和监管机构的审查，潜在的法律诉讼和政策变化可能会对其业务运营产生负面影响。",
+                    "kind": "inference",
+                    "source": null,
+                    "as_of": null,
+                    "confidence": "medium"
+                  },
+                  {
+                    "text": "公司收入的多元化服务虽有所增加，但在整体营收中依然占比较小，无法充分抵消核心产品的波动性风险。",
+                    "kind": "inference",
+                    "source": null,
+                    "as_of": null,
+                    "confidence": "medium"
+                  }
+                ],
+                "caveats": "数据截止至2023年10月，可能不反映最新的市场变化或公司发展情况。"
+              }
+            },
+            "synthesizer": {
+              "status": "completed",
+              "model": "gpt-4o"
+            }
+          },
+          "verifier_result": {
+            "passed": true,
+            "checked_values": 8,
+            "violations": []
+          },
+          "fallback_reason": null
+        },
+        "duration_ms": 98847,
+        "architecture": "multi-agent"
+      }
+    },
+    {
+      "symbol": "CRWV",
+      "single-call": {
+        "score": {
+          "checked_numeric_date_claims": 1,
+          "unsupported_numeric_date_claims": 0,
+          "numeric_groundedness": 1,
+          "known_traps": 1,
+          "fabricated_traps": [],
+          "violations": []
+        },
+        "output": {
+          "business_lines": [],
+          "business_model": "CoreWeave, Inc. 是一家从事预打包软件服务的公司，其业务范围可能包括云计算和其他相关技术领域。",
+          "caveats": "无法获取实时市场数据及财报信息，可能影响分析的完整性。",
+          "company_profile": {
+            "as_of": "2026-09-19",
+            "employees": null,
+            "exchange_ticker": "Nasdaq: CRWV",
+            "founded": null,
+            "headquarters": "LIVINGSTON, NJ",
+            "industry": "Services-Prepackaged Software",
+            "kind": "fact",
+            "legal_name": "CoreWeave, Inc.",
+            "market_cap": null,
+            "sector": null,
+            "source": "SEC EDGAR submissions",
+            "summary": "CoreWeave, Inc. 是一家从事预打包软件服务的企业，总部位于新泽西州利文斯顿。公司业务涵盖支持软件实施和管理的解决方案，但相关财务或业务数据尚未公开。",
+            "website": "https://www.sec.gov/edgar/browse/?CIK=0001769628"
+          },
+          "competition": [],
+          "customers": [],
+          "differentiation": [],
+          "moat": [],
+          "overview": "CoreWeave, Inc. 是一家从事预打包软件服务的公司，总部位于新泽西州利文斯顿。由于缺乏详细的财务和业务信息，其行业地位和产品特色难以明确。",
+          "peer_comparison": [],
+          "product_lines": [],
+          "regions": [],
+          "suppliers": [],
+          "weaknesses": []
+        },
+        "duration_ms": 3205,
+        "architecture": "single-call"
+      },
+      "multi-agent": {
+        "score": {
+          "checked_numeric_date_claims": 2,
+          "unsupported_numeric_date_claims": 0,
+          "numeric_groundedness": 1,
+          "known_traps": 1,
+          "fabricated_traps": [],
+          "violations": []
+        },
+        "output": {
+          "business_lines": [
+            {
+              "as_of": "2026-09-19",
+              "kind": "inference",
+              "name": "服务-预打包软件",
+              "note": "推断自行业分类信息",
+              "revenue_share_pct": null,
+              "source": "SEC EDGAR submissions"
+            }
+          ],
+          "business_model": "CoreWeave, Inc. 专注于提供预打包软件服务，旨在优化客户操作流程和技术支持。",
+          "caveats": "受限于当前数据，未能提供具体的财务信息以及更完整的业务表现概述。",
+          "company_profile": {
+            "as_of": "2026-09-19",
+            "employees": null,
+            "exchange_ticker": "Nasdaq: CRWV",
+            "founded": null,
+            "headquarters": "LIVINGSTON, NJ",
+            "industry": "Services-Prepackaged Software",
+            "kind": "fact",
+            "legal_name": "CoreWeave, Inc.",
+            "market_cap": null,
+            "sector": null,
+            "source": "SEC EDGAR submissions",
+            "summary": "公司是专注于服务-预打包软件行业的企业，提供优化操作流程和技术支持的解决方案平台。成立时间不详，总部位于新泽西州利文斯顿。其他具体业务或财务数据未披露。",
+            "website": "https://www.sec.gov/edgar/browse/?CIK=0001769628"
+          },
+          "competition": [
+            {
+              "as_of": null,
+              "confidence": "medium",
+              "kind": "inference",
+              "source": null,
+              "text": "CoreWeave, Inc. 所在行业具有较强竞争，例如有许多行业头部公司正在扩展其市场份额。"
+            }
+          ],
+          "customers": [],
+          "differentiation": [
+            {
+              "as_of": null,
+              "confidence": "medium",
+              "kind": "inference",
+              "source": null,
+              "text": "地处新泽西州，可利用地理优势靠近主要商业中心，为商业合作带来便利。"
+            }
+          ],
+          "moat": [
+            {
+              "as_of": null,
+              "confidence": "medium",
+              "kind": "inference",
+              "source": null,
+              "text": "专注于预打包软件的领域整合技术和服务的方案。"
+            }
+          ],
+          "overview": "CoreWeave, Inc. 是一家位于新泽西州利文斯顿，通过为客户提供预打包软件解决方案而运营的公司。",
+          "peer_comparison": [],
+          "product_lines": [
+            {
+              "as_of": "2026-09-19",
+              "kind": "inference",
+              "name": "预打包软件解决方案",
+              "note": "基于公司行业定位和推断，可能主要关注此类产品",
+              "revenue_share_pct": null,
+              "source": "SEC EDGAR submissions"
+            }
+          ],
+          "regions": [],
+          "suppliers": [],
+          "weaknesses": [
+            {
+              "as_of": "2026-09-19",
+              "confidence": "high",
+              "kind": "fact",
+              "source": "SEC EDGAR submissions",
+              "text": "缺乏披露关键数据（如营收、员工数、市值等），可能对分析完整性有所限制。"
+            }
+          ]
+        },
+        "trace": {
+          "architecture": "multi-agent",
+          "agents": {
+            "bull": {
+              "status": "completed",
+              "duration_ms": 3589,
+              "output": {
+                "thesis": "CoreWeave, Inc. 作为一家专注于预打包软件服务的公司，在不断增长的市场需求中具备显著的增长潜力。",
+                "claims": [
+                  {
+                    "text": "CoreWeave, Inc. 在行业中的定位有利于其在快速发展的软件市场中获取客户。",
+                    "kind": "inference",
+                    "source": null,
+                    "as_of": null,
+                    "confidence": "medium"
+                  },
+                  {
+                    "text": "总部位于新泽西州的 CoreWeave, Inc. 可以有效利用地理位置优势，接近主要商业中心。",
+                    "kind": "inference",
+                    "source": null,
+                    "as_of": null,
+                    "confidence": "medium"
+                  },
+                  {
+                    "text": "公司于 2026 年 9 月 19 日已在 SEC EDGAR 上确认其身份，表明其合法的市场地位。",
+                    "kind": "fact",
+                    "source": "SEC EDGAR submissions",
+                    "as_of": "2026-09-19",
+                    "confidence": "high"
+                  }
+                ],
+                "caveats": "由于未提供具体的营业收入、员工人数及市值等信息，无法进一步评估公司的财务健康状况和市场表现。"
+              }
+            },
+            "bear": {
+              "status": "completed",
+              "duration_ms": 3668,
+              "output": {
+                "thesis": "CoreWeave, Inc. 可能面临收入增长放缓的风险，尤其是在竞争加剧的环境下。",
+                "claims": [
+                  {
+                    "text": "CoreWeave, Inc. 在服务-预打包软件行业中竞争激烈，市场中其他公司的创新速度可能会影响其市场份额。",
+                    "kind": "inference",
+                    "source": null,
+                    "as_of": null,
+                    "confidence": "medium"
+                  },
+                  {
+                    "text": "由于缺乏具体的员工数与市值数据，可能影响投资者对公司的综合评估。",
+                    "kind": "fact",
+                    "source": "SEC EDGAR submissions",
+                    "as_of": "2026-09-19",
+                    "confidence": "high"
+                  }
+                ],
+                "caveats": "数据截止到2026年，未能提供具体的市场占有率、营收增速等相关信息，可能导致分析结果偏差。"
+              }
+            },
+            "synthesizer": {
+              "status": "completed",
+              "model": "gpt-4o"
+            }
+          },
+          "verifier_result": {
+            "passed": true,
+            "checked_values": 2,
+            "violations": []
+          },
+          "fallback_reason": null
+        },
+        "duration_ms": 63422,
+        "architecture": "multi-agent"
+      }
+    },
+    {
+      "symbol": "ZZZZZZ",
+      "refusal": true
+    }
+  ]
+}

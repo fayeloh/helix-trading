@@ -4,6 +4,68 @@
 
 ## 2026-09-19
 
+### 2026-09-19：修复全球指数地球仪将无涨跌数据误显示为上涨
+
+- 修改范围：`src/components/GlobalIndexGlobe.tsx`、`docs/change-log.md`。
+- 具体变更点：地球仪标记不再把 `changePct = null` 当作 0 处理；缺少涨跌数据时显示为灰色“暂无数据”，只有非空非负值显示上涨，负值显示下跌。
+- 验证结果：待执行定向类型检查与构建验证。
+
+## 2026-09-19
+
+### 2026-09-20 02:55 CST：MVP 交付复核开始
+
+- 修改范围：`docs/change-log.md`、`eval/live.test.ts`、`src/lib/research-harness.test.ts`；后续本条会随实际收尾文件同步更新。
+- 具体变更点：开始时发现既有未提交修改：`docs/change-log.md`、`docs/harness-multi-agent.md`、`docs/mvp-harness-agent-todo.md`、`package.json`、`scripts/create_multi_agent_pitch_deck.mjs`、`src/components/AppShell.tsx`、`src/components/GlobalIndexGlobe.tsx`、`src/components/nav-items.ts`、`src/lib/events-window.server.ts`、`src/lib/market-seed.ts`、`src/lib/research-harness.server.ts`、`src/lib/research-harness.test.ts`、`src/lib/research.functions.ts`、`src/lib/research.server.ts`、`src/routes/briefing.portfolio.tsx`、`src/routes/index.tsx`、`src/styles.css` 及 `eval/`；不推断来源，仅在相关文件现状上继续收尾。在线报告改为保存 Bull/Bear trace 供人工评审，并补充 Agent 超时后实际走 fallback 的演练测试。
+- 验证结果：已由 `git status --short` 确认；待完成报告复核、fallback 演练及构建检查。
+
+### 2026-09-19：按当前 Harness 与评测实现更新路演材料及关联文档
+
+- 修改范围：`scripts/create_multi_agent_pitch_deck.mjs`、`docs/harness-multi-agent.md`、`docs/mvp-harness-agent-todo.md`、`docs/change-log.md`；项目外同步更新 `/Users/farnlyluo/Documents/helix trading-presentation/pitch-talk-track.md` 与 PPT 输出。
+- 具体变更点：将 PPT 从旧的 82 项测试表述更新为当前 `npm run verify` 的 87 项通过、8 个测试文件和 2 个默认跳过的 opt-in 评测；补充 Synthesizer 事实校验重试、最终拒绝、golden fixture 与同快照 baseline / Multi-Agent 对比。同步更新 Harness 文档的最新评测边界、MVP TODO 完成状态和评委讲解稿。
+- 验证结果：`npm run verify` 通过（8 个文件、87 项测试，2 项跳过）；已重新生成 PPTX；包完整性与 16:9 布局几何检查通过（3 页、无结构性发现）；`git diff --check` 通过。当前环境缺少 `pdf2image` 与演示文稿渲染运行时，未能完成 PNG 渲染复核。
+
+### 2026-09-19：检查开始时发现既有工作区变更
+
+- 修改范围：`docs/change-log.md`、`package.json`、`src/components/GlobalIndexGlobe.tsx`、`src/lib/events-window.server.ts`、`src/lib/research-harness.server.ts`、`src/lib/research-harness.test.ts`、`src/lib/research.functions.ts`、`src/lib/research.server.ts`、`src/styles.css`、`eval/`。
+- 具体变更点：本次检查开始时通过 `git status --short` 发现上述文件已有未提交修改；这些内容并非本次检查产生，本次不推断其来源，也不覆盖其改动。
+- 验证结果：已记录发现范围；后续仅在此基础上进行隐藏账户/持仓入口的最小 UI 调整。
+
+### 2026-09-19：隐藏暂无数据的账户与持仓界面
+
+- 修改范围：`src/components/AppShell.tsx`、`src/components/nav-items.ts`、`src/routes/index.tsx`、`src/routes/briefing.portfolio.tsx`、`docs/change-log.md`。
+- 具体变更点：移除顶部账户切换器与交易日志导航；首页移除持仓市值、成本、盈亏、持仓波动和板块分布，改为仅展示指数行情、宏观简报与数据说明；持仓定制简报页签暂时隐藏，保留宏观简报能力。账户与持仓路由及后端能力保留，待有真实数据后再恢复入口。
+- 验证结果：`npx eslint src/components/AppShell.tsx src/components/nav-items.ts src/routes/index.tsx` 通过；`npm run typecheck` 通过；`npm test` 通过（8 个文件、87 项测试，2 项跳过）；`npm run build` 通过；`git diff --check` 通过。项目其他既有文件仍有未提交修改，未覆盖。
+
+### 2026-09-19：补齐板块轮动离线行情回退
+
+- 修改范围：`src/lib/market-seed.ts`、`src/hooks/useMacroBriefing.ts`、`docs/change-log.md`。
+- 具体变更点：为美股 10 个行业 ETF 与港股 6 个行业指数增加两日离线回退快照；实时行情源失败时仍能生成领涨/领跌板块，实时源成功时继续优先使用实时数据。
+- 验证结果：`npm run typecheck` 通过；`npm test` 通过（8 个文件、87 项测试，2 项跳过）；`npm run build` 通过；`git diff --check` 通过。来源说明同步标注了实时源失败时的离线回退。
+
+### 2026-09-20：改为真正的 3D 旋转地球仪指数看板
+
+- 修改范围：`src/components/GlobalIndexGlobe.tsx`。
+- 具体变更点：将 CSS 球形动效替换为 Canvas 经纬度透视投影地球；全球指数按真实城市经纬度定位，标记与标签随地球自转并进行前后遮挡，保留右侧实时核心指数列表。
+- 验证结果：`npm run lint` 通过；`npm run build` 通过并生成 Vercel Nitro 输出。
+
+### 2026-09-20：按参考录屏替换指数看板 3D 动效
+
+- 修改范围：`src/components/GlobalIndexGlobe.tsx`、`src/styles.css`。
+- 具体变更点：参考用户提供的 Kimi「全球市场」录屏，将指数看板替换为深色终端风格的发光点阵地球、轨道线、涨跌定位标签和右侧核心指数列表；继续绑定现有真实行情数据。
+- 验证结果：`npm run lint` 通过；`npm run build` 通过并生成 Vercel Nitro 输出。
+
+### 2026-09-20 02:25 CST：开始补齐 Harness 评测与门禁
+
+- 修改范围：`docs/change-log.md`、`docs/harness-multi-agent.md`、`src/lib/events-window.server.ts`、`src/lib/research-harness.server.ts`、`src/lib/research-harness.test.ts`、`src/lib/research.server.ts`、`src/lib/research.functions.ts`、`eval/judge.ts`、`eval/judge.test.ts`、`eval/record.test.ts`、`eval/live.test.ts`、`eval/fixtures/golden.json`、`eval/reports/comparison.json`、`package.json`。
+- 具体变更点：开始时 `git status --short` 为空，没有发现既有未提交修改；为两类财报事件补齐新增字段，未知价格保持 `null`，不推测方向；Synthesizer 验证失败时将违规项反馈并重试一次，失败后转单调用 fallback，最终输出仍无法核实时拒绝交付；新增重试与拒绝不可信报告的单元测试；抽出可对同一冻结输入运行两种架构的 fundamentals 入口；fundamentals 缓存加入 pipeline 版本判断，旧单调用缓存不再直接命中；加入对冻结事实数字及空值陷阱的离线 Judge 测试；新增录制 AAPL/CRWV/无效代码与同快照调用两条真实模型路径的可选命令。首次在线跑分发现数字股票代码被误判，已排除 ticker 识别并补测试；报告保留模型原始输出供复核。
+- 验证结果：开始前 `npm run verify` 因 `WindowEvent` 两处字段缺失而失败；最终门禁通过（8 文件、87 项测试，另 2 个可选录制/在线用例默认跳过），`git diff --check` 通过。`eval:record` 获准网络访问后成功录制 AAPL、CRWV 公开档案和 ZZZZZZ 拒绝样本，两个有效档案的员工数人为置 `null` 作为陷阱。修正同行代码误报后重新在线比较：AAPL 单调用 11/11 数字/日期声明有据、多 Agent 8/8，均无空值陷阱编造，耗时约 10.3 秒/74.6 秒；CRWV 单调用 1/1、多 Agent 2/2，均无陷阱编造，耗时约 73.7 秒/9.9 秒。样本过小、声明数不同且耗时波动大，不能据此证明多 Agent 更优；原始输出留在报告中。
+
+### 2026-09-20 02:44 CST：执行中发现既有/并行工作区变更
+
+- 修改范围：`src/components/GlobalIndexGlobe.tsx`、`src/styles.css`。
+- 具体变更点：本次执行开始时工作区干净，结束核对时发现这两个不在本任务修改范围内的文件出现未提交修改；不推断来源，本次未改写其内容。
+- 验证结果：`git status --short` 确认范围；本次未将这两处变更纳入评测结论。
+
 ### 2026-09-20：改进 PPT 生成脚本的输出路径配置
 
 - 修改范围：`scripts/create_multi_agent_pitch_deck.mjs`、`docs/change-log.md`。

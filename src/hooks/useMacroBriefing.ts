@@ -54,13 +54,13 @@ async function fetchMacroBriefing(): Promise<MacroBriefing> {
       sector_rotation: [
         {
           name: "Yahoo Finance 行业 ETF（美股）",
-          covers: "美股行业板块当日涨跌幅",
+          covers: "美股行业板块当日涨跌幅；实时源不可用时使用离线回退快照",
           updated_at: live.fetched_at,
           url: "https://finance.yahoo.com/sectors/",
         },
         {
           name: "恒生行业分类指数 / 恒生科技（港股）",
-          covers: "港股行业板块当日涨跌幅",
+          covers: "港股行业板块当日涨跌幅；实时源不可用时使用离线回退快照",
           updated_at: live.fetched_at,
           url: "https://www.hsi.com.hk/schi",
         },

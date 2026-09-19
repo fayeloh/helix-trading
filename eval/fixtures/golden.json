@@ -1,0 +1,90 @@
+[
+  {
+    "symbol": "AAPL",
+    "market": "US",
+    "captured_at": "2026-09-19T18:32:08.596Z",
+    "provenance": "recorded-public-data",
+    "expected_verified": true,
+    "snapshot": {
+      "commonUser": "研究标的：AAPL（市场 US，标准行情代码 AAPL）。资金流向时间窗：过去 90 天。\n实时行情参考：行情数据不可用\n已验证标的身份（SEC EDGAR + Yahoo Finance）：{\"name\":\"Apple Inc.\",\"type\":\"股票\",\"market\":\"US\",\"source\":\"SEC EDGAR + Yahoo Finance\",\"symbol\":\"AAPL\",\"exchange\":\"Nasdaq\",\"verified\":true}\n真实公司档案（来源 SEC EDGAR submissions + Yahoo Finance chart metadata + Financial Modeling Prep /profile，2026-09-19，必须原样采用）：{\"name\":\"Apple Inc.\",\"as_of\":\"2026-09-19\",\"sector\":\"Technology\",\"source\":\"SEC EDGAR submissions + Yahoo Finance chart metadata + Financial Modeling Prep /profile\",\"symbol\":\"AAPL\",\"founded\":\"1980-12-12\",\"website\":\"https://www.apple.com\",\"currency\":\"USD\",\"exchange\":\"Nasdaq\",\"industry\":\"Electronic Computers\",\"employees\":null,\"marketCap\":4936860972280,\"description\":\"Apple Inc. is a global technology corporation that specializes in the conceptualization, production, and sale of a diverse suite of electronic devices. Its comprehensive hardware lineup features the well-known iPhone smartphones, Mac personal computers, and versatile iPad tablets. The company also supplies a range of wearables, smart home products, and accessories, including AirPods, Apple TV, Apple Watch, items from the Beats brand, and HomePod speakers. Beyond its device offerings, Apple delivers essential support services like AppleCare and robust cloud solutions. It oversees key digital platforms, prominently the App Store, which acts as a central hub for customers to discover and download countless applications and digital content, from e-books and music to videos, games, and podcasts. The company also generates revenue via advertising, leveraging both its proprietary ad platforms and third-party licensing deals. Apple's ecosystem is further bolstered by a wide array of subscription-based services: Apple Arcade for gaming, Apple Fitness+ for personalized wellness, Apple Music for curated audio experiences and on-demand radio, Apple News+ for access to news and magazines, and Apple TV+ for exclusive original video programming. Its financial services portfolio includes the co-branded Apple Card and the mobile payment system, Apple Pay. Additionally, Apple strategically licenses its intellectual property. The company serves a broad clientele that spans individual consumers, small and medium-sized enterprises, as well as institutional clients in the education, corporate, and governmental sectors. Products are distributed through a multi-channel strategy, utilizing Apple's own physical retail locations and online storefronts, a dedicated direct sales team, and collaborations with external partners such as mobile network providers, wholesalers, general retailers, and authorized resellers. The App Store additionally functions as the primary conduit for third-party applications designed for its devices. Founded in 1976, Apple Inc. is headquartered in Cupertino, California.\",\"headquarters\":\"CUPERTINO, CA\"}",
+      "grounding": "\n已验证标的身份（SEC EDGAR + Yahoo Finance）：{\"name\":\"Apple Inc.\",\"type\":\"股票\",\"market\":\"US\",\"source\":\"SEC EDGAR + Yahoo Finance\",\"symbol\":\"AAPL\",\"exchange\":\"Nasdaq\",\"verified\":true}\n真实公司档案（来源 SEC EDGAR submissions + Yahoo Finance chart metadata + Financial Modeling Prep /profile，2026-09-19，必须原样采用）：{\"name\":\"Apple Inc.\",\"as_of\":\"2026-09-19\",\"sector\":\"Technology\",\"source\":\"SEC EDGAR submissions + Yahoo Finance chart metadata + Financial Modeling Prep /profile\",\"symbol\":\"AAPL\",\"founded\":\"1980-12-12\",\"website\":\"https://www.apple.com\",\"currency\":\"USD\",\"exchange\":\"Nasdaq\",\"industry\":\"Electronic Computers\",\"employees\":null,\"marketCap\":4936860972280,\"description\":\"Apple Inc. is a global technology corporation that specializes in the conceptualization, production, and sale of a diverse suite of electronic devices. Its comprehensive hardware lineup features the well-known iPhone smartphones, Mac personal computers, and versatile iPad tablets. The company also supplies a range of wearables, smart home products, and accessories, including AirPods, Apple TV, Apple Watch, items from the Beats brand, and HomePod speakers. Beyond its device offerings, Apple delivers essential support services like AppleCare and robust cloud solutions. It oversees key digital platforms, prominently the App Store, which acts as a central hub for customers to discover and download countless applications and digital content, from e-books and music to videos, games, and podcasts. The company also generates revenue via advertising, leveraging both its proprietary ad platforms and third-party licensing deals. Apple's ecosystem is further bolstered by a wide array of subscription-based services: Apple Arcade for gaming, Apple Fitness+ for personalized wellness, Apple Music for curated audio experiences and on-demand radio, Apple News+ for access to news and magazines, and Apple TV+ for exclusive original video programming. Its financial services portfolio includes the co-branded Apple Card and the mobile payment system, Apple Pay. Additionally, Apple strategically licenses its intellectual property. The company serves a broad clientele that spans individual consumers, small and medium-sized enterprises, as well as institutional clients in the education, corporate, and governmental sectors. Products are distributed through a multi-channel strategy, utilizing Apple's own physical retail locations and online storefronts, a dedicated direct sales team, and collaborations with external partners such as mobile network providers, wholesalers, general retailers, and authorized resellers. The App Store additionally functions as the primary conduit for third-party applications designed for its devices. Founded in 1976, Apple Inc. is headquartered in Cupertino, California.\",\"headquarters\":\"CUPERTINO, CA\"}",
+      "resolved": {
+        "name": "Apple Inc.",
+        "type": "股票",
+        "market": "US",
+        "source": "SEC EDGAR + Yahoo Finance",
+        "symbol": "AAPL",
+        "exchange": "Nasdaq",
+        "verified": true
+      },
+      "verifiedProfile": {
+        "name": "Apple Inc.",
+        "as_of": "2026-09-19",
+        "sector": "Technology",
+        "source": "SEC EDGAR submissions + Yahoo Finance chart metadata + Financial Modeling Prep /profile",
+        "symbol": "AAPL",
+        "founded": "1980-12-12",
+        "website": "https://www.apple.com",
+        "currency": "USD",
+        "exchange": "Nasdaq",
+        "industry": "Electronic Computers",
+        "employees": null,
+        "marketCap": 4936860972280,
+        "description": "Apple Inc. is a global technology corporation that specializes in the conceptualization, production, and sale of a diverse suite of electronic devices. Its comprehensive hardware lineup features the well-known iPhone smartphones, Mac personal computers, and versatile iPad tablets. The company also supplies a range of wearables, smart home products, and accessories, including AirPods, Apple TV, Apple Watch, items from the Beats brand, and HomePod speakers. Beyond its device offerings, Apple delivers essential support services like AppleCare and robust cloud solutions. It oversees key digital platforms, prominently the App Store, which acts as a central hub for customers to discover and download countless applications and digital content, from e-books and music to videos, games, and podcasts. The company also generates revenue via advertising, leveraging both its proprietary ad platforms and third-party licensing deals. Apple's ecosystem is further bolstered by a wide array of subscription-based services: Apple Arcade for gaming, Apple Fitness+ for personalized wellness, Apple Music for curated audio experiences and on-demand radio, Apple News+ for access to news and magazines, and Apple TV+ for exclusive original video programming. Its financial services portfolio includes the co-branded Apple Card and the mobile payment system, Apple Pay. Additionally, Apple strategically licenses its intellectual property. The company serves a broad clientele that spans individual consumers, small and medium-sized enterprises, as well as institutional clients in the education, corporate, and governmental sectors. Products are distributed through a multi-channel strategy, utilizing Apple's own physical retail locations and online storefronts, a dedicated direct sales team, and collaborations with external partners such as mobile network providers, wholesalers, general retailers, and authorized resellers. The App Store additionally functions as the primary conduit for third-party applications designed for its devices. Founded in 1976, Apple Inc. is headquartered in Cupertino, California.",
+        "headquarters": "CUPERTINO, CA"
+      },
+      "lang": "zh"
+    },
+    "known_traps": [
+      "company_profile.employees"
+    ]
+  },
+  {
+    "symbol": "CRWV",
+    "market": "US",
+    "captured_at": "2026-09-19T18:32:15.344Z",
+    "provenance": "recorded-public-data",
+    "expected_verified": true,
+    "snapshot": {
+      "commonUser": "研究标的：CRWV（市场 US，标准行情代码 CRWV）。资金流向时间窗：过去 90 天。\n实时行情参考：行情数据不可用\n已验证标的身份（SEC EDGAR）：{\"symbol\":\"CRWV\",\"name\":\"CoreWeave, Inc.\",\"exchange\":\"Nasdaq\",\"market\":\"US\",\"type\":\"股票\",\"verified\":true,\"source\":\"SEC EDGAR\"}\n真实公司档案（来源 SEC EDGAR submissions，2026-09-19，必须原样采用）：{\"name\":\"CoreWeave, Inc.\",\"exchange\":\"Nasdaq\",\"symbol\":\"CRWV\",\"sector\":null,\"industry\":\"Services-Prepackaged Software\",\"founded\":null,\"headquarters\":\"LIVINGSTON, NJ\",\"employees\":null,\"marketCap\":null,\"website\":\"https://www.sec.gov/edgar/browse/?CIK=0001769628\",\"currency\":null,\"description\":null,\"source\":\"SEC EDGAR submissions\",\"as_of\":\"2026-09-19\"}",
+      "grounding": "\n已验证标的身份（SEC EDGAR）：{\"symbol\":\"CRWV\",\"name\":\"CoreWeave, Inc.\",\"exchange\":\"Nasdaq\",\"market\":\"US\",\"type\":\"股票\",\"verified\":true,\"source\":\"SEC EDGAR\"}\n真实公司档案（来源 SEC EDGAR submissions，2026-09-19，必须原样采用）：{\"name\":\"CoreWeave, Inc.\",\"exchange\":\"Nasdaq\",\"symbol\":\"CRWV\",\"sector\":null,\"industry\":\"Services-Prepackaged Software\",\"founded\":null,\"headquarters\":\"LIVINGSTON, NJ\",\"employees\":null,\"marketCap\":null,\"website\":\"https://www.sec.gov/edgar/browse/?CIK=0001769628\",\"currency\":null,\"description\":null,\"source\":\"SEC EDGAR submissions\",\"as_of\":\"2026-09-19\"}",
+      "resolved": {
+        "symbol": "CRWV",
+        "name": "CoreWeave, Inc.",
+        "exchange": "Nasdaq",
+        "market": "US",
+        "type": "股票",
+        "verified": true,
+        "source": "SEC EDGAR"
+      },
+      "verifiedProfile": {
+        "name": "CoreWeave, Inc.",
+        "exchange": "Nasdaq",
+        "symbol": "CRWV",
+        "sector": null,
+        "industry": "Services-Prepackaged Software",
+        "founded": null,
+        "headquarters": "LIVINGSTON, NJ",
+        "employees": null,
+        "marketCap": null,
+        "website": "https://www.sec.gov/edgar/browse/?CIK=0001769628",
+        "currency": null,
+        "description": null,
+        "source": "SEC EDGAR submissions",
+        "as_of": "2026-09-19"
+      },
+      "lang": "zh"
+    },
+    "known_traps": [
+      "company_profile.employees"
+    ]
+  },
+  {
+    "symbol": "ZZZZZZ",
+    "market": "US",
+    "captured_at": "2026-09-19T18:32:17.720Z",
+    "provenance": "recorded-public-data",
+    "expected_verified": false,
+    "known_traps": []
+  }
+]
