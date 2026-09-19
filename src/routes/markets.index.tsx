@@ -1,7 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowDown, ArrowUp, Plus, RefreshCw, Settings2, Trash2 } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  Plus,
+  RefreshCw,
+  Settings2,
+  Trash2,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -10,7 +17,13 @@ import { KindBadge } from "@/components/Disclaimer";
 import { SymbolSearchInput } from "@/components/SymbolSearchInput";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -26,6 +39,7 @@ import { useWatchlist, type WatchItem } from "@/hooks/useWatchlist";
 import { INDEX_BOARD, INDEX_CATALOG } from "@/lib/constants";
 import { getIndexAttributions, getIndexBoard } from "@/lib/market.functions";
 import { fmtNum, fmtPct, toneClass } from "@/lib/portfolio";
+import { GlobalIndexGlobe } from "@/components/GlobalIndexGlobe";
 
 export const Route = createFileRoute("/markets/")({
   head: () => ({
@@ -37,7 +51,10 @@ export const Route = createFileRoute("/markets/")({
           "标普500、纳斯达克、恒生科技、沪深300、黄金、比特币、美元指数、VIX 与美债 10Y 的近 5 个交易日涨跌与 AI 归因说明，看板可自由增删排序。",
       },
       { property: "og:title", content: "全球指数看板 — Helix Trading" },
-      { property: "og:description", content: "跨市场指数 5 日涨跌与归因逻辑链，支持自定义看板。" },
+      {
+        property: "og:description",
+        content: "跨市场指数 5 日涨跌与归因逻辑链，支持自定义看板。",
+      },
     ],
   }),
   component: MarketsPage,
@@ -53,6 +70,7 @@ function MarketsPage() {
     queryKey: ["index-board", key],
     queryFn: async () => await boardFn({ data: { defs: watchlist } }),
     staleTime: 5 * 60 * 1000,
+    refetchInterval: 60 * 1000,
   });
 
   const attributions = useQuery({
@@ -63,7 +81,9 @@ function MarketsPage() {
     retry: false,
   });
 
-  const attrMap = new Map((attributions.data?.items ?? []).map((a) => [a.symbol, a]));
+  const attrMap = new Map(
+    (attributions.data?.items ?? []).map((a) => [a.symbol, a]),
+  );
 
   return (
     <AppShell>
@@ -72,8 +92,10 @@ function MarketsPage() {
           <div>
             <h1 className="text-xl font-semibold">全球指数看板</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              过去 5 个交易日涨跌幅 + 每日归因。行情来源 Yahoo Finance
-              {board.data ? ` · 抓取时间 ${new Date(board.data.fetchedAt).toLocaleString("zh-CN")}` : ""}
+              过去 5 个交易日涨跌幅 + 每日归因。行情来自多源免费数据并自动回退
+              {board.data
+                ? ` · 抓取时间 ${new Date(board.data.fetchedAt).toLocaleString("zh-CN")}`
+                : ""}
             </p>
           </div>
           <div className="flex gap-2">
@@ -87,11 +109,22 @@ function MarketsPage() {
               }}
               disabled={board.isFetching}
             >
-              <RefreshCw className={`mr-1 size-3.5 ${board.isFetching ? "animate-spin" : ""}`} />
+              <RefreshCw
+                className={`mr-1 size-3.5 ${board.isFetching ? "animate-spin" : ""}`}
+              />
               刷新
             </Button>
           </div>
         </div>
+
+        <GlobalIndexGlobe
+          rows={(board.data?.rows ?? []).map((r) => ({
+            symbol: r.symbol,
+            label: r.label,
+            price: r.price,
+            changePct: r.days.at(-1)?.changePct ?? null,
+          }))}
+        />
 
         {board.isLoading ? (
           <div className="grid gap-3 md:grid-cols-2">
@@ -124,11 +157,18 @@ function MarketsPage() {
                             {row.label}
                           </Link>
                         </CardTitle>
-                        <CardDescription className="tabular text-[11px]">{row.symbol}</CardDescription>
+                        <CardDescription className="tabular text-[11px]">
+                          {row.symbol}
+                          {row.source ? ` · ${row.source}` : ""}
+                        </CardDescription>
                       </div>
                       <div className="text-right">
-                        <div className="tabular text-sm font-semibold">{fmtNum(row.price)}</div>
-                        <div className={`tabular text-xs ${toneClass(latest?.changePct ?? null)}`}>
+                        <div className="tabular text-sm font-semibold">
+                          {fmtNum(row.price)}
+                        </div>
+                        <div
+                          className={`tabular text-xs ${toneClass(latest?.changePct ?? null)}`}
+                        >
                           {fmtPct(latest?.changePct ?? null)}
                         </div>
                       </div>
@@ -136,7 +176,9 @@ function MarketsPage() {
                   </CardHeader>
                   <CardContent className="space-y-3">
                     {row.error ? (
-                      <p className="text-xs text-warn">数据不可用：{row.error}</p>
+                      <p className="text-xs text-warn">
+                        数据不可用：{row.error}
+                      </p>
                     ) : (
                       <div className="flex gap-1">
                         {row.days.map((d) => (
@@ -150,7 +192,9 @@ function MarketsPage() {
                                     : "bg-muted text-muted-foreground"
                               }`}
                             >
-                              {d.changePct == null ? "—" : `${d.changePct.toFixed(2)}%`}
+                              {d.changePct == null
+                                ? "—"
+                                : `${d.changePct.toFixed(2)}%`}
                             </div>
                             <div className="mt-1 text-[10px] text-muted-foreground">
                               {d.date.slice(5)}
@@ -167,14 +211,19 @@ function MarketsPage() {
                         <>
                           <div className="flex items-start justify-between gap-2">
                             <p className="text-xs font-medium">{attr.driver}</p>
-                            <KindBadge kind={attr.kind} confidence={attr.confidence} />
+                            <KindBadge
+                              kind={attr.kind}
+                              confidence={attr.confidence}
+                            />
                           </div>
                           <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
                             {attr.logic}
                           </p>
                         </>
                       ) : (
-                        <p className="text-[11px] text-muted-foreground">归因生成中或暂不可用。</p>
+                        <p className="text-[11px] text-muted-foreground">
+                          归因生成中或暂不可用。
+                        </p>
                       )}
                     </div>
                   </CardContent>
@@ -185,7 +234,9 @@ function MarketsPage() {
         )}
 
         {attributions.data?.caveats ? (
-          <p className="text-[11px] text-muted-foreground">数据说明：{attributions.data.caveats}</p>
+          <p className="text-[11px] text-muted-foreground">
+            数据说明：{attributions.data.caveats}
+          </p>
         ) : null}
       </div>
     </AppShell>
@@ -203,7 +254,8 @@ function BoardEditor() {
     if (open) setDraft(items);
   }, [open, items]);
 
-  const has = (s: string) => draft.some((d) => d.symbol.toUpperCase() === s.toUpperCase());
+  const has = (s: string) =>
+    draft.some((d) => d.symbol.toUpperCase() === s.toUpperCase());
 
   const add = (item: WatchItem) => {
     if (has(item.symbol)) return;
@@ -244,15 +296,17 @@ function BoardEditor() {
         <DialogHeader>
           <DialogTitle>自定义指数看板</DialogTitle>
           <DialogDescription>
-            增删与排序会保存到你的账户，换设备后一致。代码使用 Yahoo Finance 格式（如 GC=F 黄金、^HSTECH
-            恒生科技、BTC-USD 比特币、AAPL 个股）。
+            增删与排序会保存到你的账户，换设备后一致。代码使用 Yahoo Finance
+            格式（如 GC=F 黄金、^HSTECH 恒生科技、BTC-USD 比特币、AAPL 个股）。
             {isCustom ? "" : " 当前使用默认列表。"}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
           <div>
-            <p className="mb-2 text-xs font-medium text-muted-foreground">当前看板（{draft.length}）</p>
+            <p className="mb-2 text-xs font-medium text-muted-foreground">
+              当前看板（{draft.length}）
+            </p>
             <div className="space-y-1.5">
               {draft.map((it, i) => (
                 <div
@@ -260,22 +314,36 @@ function BoardEditor() {
                   className="flex items-center gap-2 rounded-md border border-border px-2.5 py-1.5"
                 >
                   <span className="text-sm font-medium">{it.label}</span>
-                  <span className="tabular text-[11px] text-muted-foreground">{it.symbol}</span>
+                  <span className="tabular text-[11px] text-muted-foreground">
+                    {it.symbol}
+                  </span>
                   <Badge variant="secondary" className="text-[10px]">
                     {it.group}
                   </Badge>
                   <div className="ml-auto flex gap-1">
-                    <Button size="icon" variant="ghost" className="size-7" onClick={() => move(i, -1)}>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="size-7"
+                      onClick={() => move(i, -1)}
+                    >
                       <ArrowUp className="size-3.5" />
                     </Button>
-                    <Button size="icon" variant="ghost" className="size-7" onClick={() => move(i, 1)}>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="size-7"
+                      onClick={() => move(i, 1)}
+                    >
                       <ArrowDown className="size-3.5" />
                     </Button>
                     <Button
                       size="icon"
                       variant="ghost"
                       className="size-7 text-bear"
-                      onClick={() => setDraft((d) => d.filter((x) => x.symbol !== it.symbol))}
+                      onClick={() =>
+                        setDraft((d) => d.filter((x) => x.symbol !== it.symbol))
+                      }
                     >
                       <Trash2 className="size-3.5" />
                     </Button>
@@ -283,13 +351,17 @@ function BoardEditor() {
                 </div>
               ))}
               {draft.length === 0 ? (
-                <p className="text-xs text-muted-foreground">看板为空，保存后将回落到默认列表。</p>
+                <p className="text-xs text-muted-foreground">
+                  看板为空，保存后将回落到默认列表。
+                </p>
               ) : null}
             </div>
           </div>
 
           <div>
-            <p className="mb-2 text-xs font-medium text-muted-foreground">从候选中添加</p>
+            <p className="mb-2 text-xs font-medium text-muted-foreground">
+              从候选中添加
+            </p>
             <div className="flex flex-wrap gap-1.5">
               {INDEX_CATALOG.filter((c) => !has(c.symbol)).map((c) => (
                 <Button
@@ -307,7 +379,9 @@ function BoardEditor() {
           </div>
 
           <div>
-            <p className="mb-2 text-xs font-medium text-muted-foreground">添加任意标的</p>
+            <p className="mb-2 text-xs font-medium text-muted-foreground">
+              添加任意标的
+            </p>
             <div className="flex flex-wrap gap-2">
               <div className="w-56">
                 <SymbolSearchInput
@@ -335,7 +409,11 @@ function BoardEditor() {
         </div>
 
         <DialogFooter className="gap-2">
-          <Button size="sm" variant="ghost" onClick={() => setDraft(INDEX_BOARD)}>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => setDraft(INDEX_BOARD)}
+          >
             恢复默认
           </Button>
           <Button
@@ -347,7 +425,8 @@ function BoardEditor() {
                   toast.success("看板已保存");
                   setOpen(false);
                 },
-                onError: (e) => toast.error(e instanceof Error ? e.message : "保存失败"),
+                onError: (e) =>
+                  toast.error(e instanceof Error ? e.message : "保存失败"),
               });
             }}
           >

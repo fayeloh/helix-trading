@@ -1,8 +1,25 @@
-import { AI_MODEL_DEEP, AI_MODEL_FAST, aiJson, guardrails, type OutputLang } from "./ai.server";
+import {
+  AI_MODEL_DEEP,
+  AI_MODEL_FAST,
+  aiJson,
+  guardrails,
+  type OutputLang,
+} from "./ai.server";
 import { getFlowFacts } from "./insider-flows.server";
-import { getCompanyProfile, getEarningsFacts, type CompanyProfileData } from "./fundamentals.server";
-import { getUsEarningsForecast, type EarningsForecast } from "./earnings-facts.server";
-import { getEarningsReactions, type EarningsReaction } from "./earnings-reaction.server";
+import {
+  getCompanyProfile,
+  getEarningsFacts,
+  type CompanyProfileData,
+} from "./fundamentals.server";
+import {
+  getUsEarningsForecast,
+  type EarningsForecast,
+} from "./earnings-facts.server";
+import type { EarningsFact } from "./earnings-facts.server";
+import {
+  getEarningsReactions,
+  type EarningsReaction,
+} from "./earnings-reaction.server";
 import { getSeasonality, type Seasonality } from "./seasonality.server";
 import { getEventsWindow, type WindowEvent } from "./events-window.server";
 import { getChartData, yahooSymbol } from "./market-api.server";
@@ -13,7 +30,8 @@ import {
   type DebateCase,
 } from "./research-harness.server";
 
-export type ResearchSectionKey = "fundamentals" | "earnings" | "cycle" | "flows";
+export type ResearchSectionKey =
+  "fundamentals" | "earnings" | "cycle" | "flows";
 
 const SOURCED = {
   type: "object",
@@ -24,7 +42,10 @@ const SOURCED = {
     kind: { type: "string", enum: ["fact", "inference"] },
     source: { type: ["string", "null"] },
     as_of: { type: ["string", "null"] },
-    confidence: { type: ["string", "null"], enum: ["high", "medium", "low", null] },
+    confidence: {
+      type: ["string", "null"],
+      enum: ["high", "medium", "low", null],
+    },
   },
 };
 
@@ -44,12 +65,41 @@ export const BEAR_CASE_SCHEMA = BULL_CASE_SCHEMA;
 const FUNDAMENTALS_SCHEMA = {
   type: "object",
   additionalProperties: false,
-  required: ["company_profile", "overview", "business_lines", "product_lines", "regions", "business_model", "moat", "customers", "suppliers", "competition", "peer_comparison", "differentiation", "weaknesses", "caveats"],
+  required: [
+    "company_profile",
+    "overview",
+    "business_lines",
+    "product_lines",
+    "regions",
+    "business_model",
+    "moat",
+    "customers",
+    "suppliers",
+    "competition",
+    "peer_comparison",
+    "differentiation",
+    "weaknesses",
+    "caveats",
+  ],
   properties: {
     company_profile: {
       type: "object",
       additionalProperties: false,
-      required: ["legal_name", "exchange_ticker", "sector", "industry", "founded", "headquarters", "employees", "market_cap", "website", "summary", "kind", "source", "as_of"],
+      required: [
+        "legal_name",
+        "exchange_ticker",
+        "sector",
+        "industry",
+        "founded",
+        "headquarters",
+        "employees",
+        "market_cap",
+        "website",
+        "summary",
+        "kind",
+        "source",
+        "as_of",
+      ],
       properties: {
         legal_name: { type: ["string", "null"] },
         exchange_ticker: { type: ["string", "null"] },
@@ -72,7 +122,14 @@ const FUNDAMENTALS_SCHEMA = {
       items: {
         type: "object",
         additionalProperties: false,
-        required: ["name", "revenue_share_pct", "note", "kind", "source", "as_of"],
+        required: [
+          "name",
+          "revenue_share_pct",
+          "note",
+          "kind",
+          "source",
+          "as_of",
+        ],
         properties: {
           name: { type: "string" },
           revenue_share_pct: { type: ["number", "null"] },
@@ -88,7 +145,14 @@ const FUNDAMENTALS_SCHEMA = {
       items: {
         type: "object",
         additionalProperties: false,
-        required: ["name", "revenue_share_pct", "note", "kind", "source", "as_of"],
+        required: [
+          "name",
+          "revenue_share_pct",
+          "note",
+          "kind",
+          "source",
+          "as_of",
+        ],
         properties: {
           name: { type: "string" },
           revenue_share_pct: { type: ["number", "null"] },
@@ -125,7 +189,15 @@ const FUNDAMENTALS_SCHEMA = {
       items: {
         type: "object",
         additionalProperties: false,
-        required: ["peer", "ticker", "metrics", "note", "kind", "source", "as_of"],
+        required: [
+          "peer",
+          "ticker",
+          "metrics",
+          "note",
+          "kind",
+          "source",
+          "as_of",
+        ],
         properties: {
           peer: { type: "string" },
           ticker: { type: ["string", "null"] },
@@ -136,10 +208,16 @@ const FUNDAMENTALS_SCHEMA = {
               additionalProperties: false,
               required: ["metric", "target_value", "peer_value", "edge"],
               properties: {
-                metric: { type: "string", description: "如 毛利率 / 营收增速 / 市占率 / 估值" },
+                metric: {
+                  type: "string",
+                  description: "如 毛利率 / 营收增速 / 市占率 / 估值",
+                },
                 target_value: { type: ["string", "null"] },
                 peer_value: { type: ["string", "null"] },
-                edge: { type: "string", enum: ["target_better", "peer_better", "similar", "unknown"] },
+                edge: {
+                  type: "string",
+                  enum: ["target_better", "peer_better", "similar", "unknown"],
+                },
               },
             },
           },
@@ -150,8 +228,16 @@ const FUNDAMENTALS_SCHEMA = {
         },
       },
     },
-    differentiation: { type: "array", items: SOURCED, description: "差异化优势，无则返回空数组" },
-    weaknesses: { type: "array", items: SOURCED, description: "相对同行的劣势" },
+    differentiation: {
+      type: "array",
+      items: SOURCED,
+      description: "差异化优势，无则返回空数组",
+    },
+    weaknesses: {
+      type: "array",
+      items: SOURCED,
+      description: "相对同行的劣势",
+    },
     caveats: { type: "string" },
   },
 };
@@ -166,15 +252,45 @@ const EARNINGS_SCHEMA = {
       items: {
         type: "object",
         additionalProperties: false,
-        required: ["period", "report_date", "report_timing", "currency", "revenue_actual", "revenue_estimate", "revenue_surprise_abs", "revenue_surprise_pct", "net_income_actual", "net_income_estimate", "eps_actual", "eps_estimate", "eps_surprise_abs", "eps_surprise_pct", "summary", "beat_or_miss", "next_day_move_pct", "five_day_move_pct", "kind", "source"],
+        required: [
+          "period",
+          "report_date",
+          "report_timing",
+          "currency",
+          "revenue_actual",
+          "revenue_estimate",
+          "revenue_surprise_abs",
+          "revenue_surprise_pct",
+          "net_income_actual",
+          "net_income_estimate",
+          "eps_actual",
+          "eps_estimate",
+          "eps_surprise_abs",
+          "eps_surprise_pct",
+          "summary",
+          "beat_or_miss",
+          "next_day_move_pct",
+          "five_day_move_pct",
+          "kind",
+          "source",
+        ],
         properties: {
           period: { type: "string" },
           report_date: { type: "string" },
-          report_timing: { type: "string", enum: ["before_open", "after_close", "unknown"] },
+          report_timing: {
+            type: "string",
+            enum: ["before_open", "after_close", "unknown"],
+          },
           currency: { type: ["string", "null"] },
-          revenue_actual: { type: ["string", "null"], description: "带单位的具体金额，如 94.93B USD" },
+          revenue_actual: {
+            type: ["string", "null"],
+            description: "带单位的具体金额，如 94.93B USD",
+          },
           revenue_estimate: { type: ["string", "null"] },
-          revenue_surprise_abs: { type: ["string", "null"], description: "实际减预期的金额差" },
+          revenue_surprise_abs: {
+            type: ["string", "null"],
+            description: "实际减预期的金额差",
+          },
           revenue_surprise_pct: { type: ["number", "null"] },
           net_income_actual: { type: ["string", "null"] },
           net_income_estimate: { type: ["string", "null"] },
@@ -183,7 +299,10 @@ const EARNINGS_SCHEMA = {
           eps_surprise_abs: { type: ["string", "null"] },
           eps_surprise_pct: { type: ["number", "null"] },
           summary: { type: "string" },
-          beat_or_miss: { type: "string", enum: ["beat", "miss", "mixed", "unknown"] },
+          beat_or_miss: {
+            type: "string",
+            enum: ["beat", "miss", "mixed", "unknown"],
+          },
           next_day_move_pct: { type: ["number", "null"] },
           five_day_move_pct: { type: ["number", "null"] },
           kind: { type: "string", enum: ["fact", "inference"] },
@@ -194,14 +313,28 @@ const EARNINGS_SCHEMA = {
     next_report: {
       type: "object",
       additionalProperties: false,
-      required: ["expected_date", "date_confidence", "consensus_eps", "consensus_revenue", "watch_items", "skew", "skew_reasoning"],
+      required: [
+        "expected_date",
+        "date_confidence",
+        "consensus_eps",
+        "consensus_revenue",
+        "watch_items",
+        "skew",
+        "skew_reasoning",
+      ],
       properties: {
         expected_date: { type: "string" },
-        date_confidence: { type: ["string", "null"], enum: ["high", "medium", "low", null] },
+        date_confidence: {
+          type: ["string", "null"],
+          enum: ["high", "medium", "low", null],
+        },
         consensus_eps: { type: ["string", "null"] },
         consensus_revenue: { type: ["string", "null"] },
         watch_items: { type: "array", items: { type: "string" } },
-        skew: { type: "string", enum: ["bullish", "bearish", "neutral", "unknown"] },
+        skew: {
+          type: "string",
+          enum: ["bullish", "bearish", "neutral", "unknown"],
+        },
         skew_reasoning: { type: "string" },
       },
     },
@@ -213,10 +346,31 @@ const EARNINGS_SCHEMA = {
 const CYCLE_SCHEMA = {
   type: "object",
   additionalProperties: false,
-  required: ["sector", "economic_cycle_stage", "industry_cycle_stage", "stage_reasoning", "strong_months", "weak_months", "monthly_stats", "upcoming_events", "caveats"],
+  required: [
+    "sector",
+    "economic_cycle_stage",
+    "industry_cycle_stage",
+    "stage_reasoning",
+    "strong_months",
+    "weak_months",
+    "monthly_stats",
+    "upcoming_events",
+    "caveats",
+  ],
   properties: {
     sector: { type: "string" },
-    economic_cycle_stage: { type: "string", enum: ["early_expansion", "mid_expansion", "late_expansion", "slowdown", "recession", "recovery", "unknown"] },
+    economic_cycle_stage: {
+      type: "string",
+      enum: [
+        "early_expansion",
+        "mid_expansion",
+        "late_expansion",
+        "slowdown",
+        "recession",
+        "recovery",
+        "unknown",
+      ],
+    },
     industry_cycle_stage: { type: "string" },
     stage_reasoning: { type: "string" },
     strong_months: { type: "array", items: { type: "string" } },
@@ -245,9 +399,15 @@ const CYCLE_SCHEMA = {
         properties: {
           date: { type: "string" },
           event: { type: "string" },
-          direction: { type: "string", enum: ["bullish", "bearish", "neutral", "unknown"] },
+          direction: {
+            type: "string",
+            enum: ["bullish", "bearish", "neutral", "unknown"],
+          },
           logic: { type: "string" },
-          confidence: { type: ["string", "null"], enum: ["high", "medium", "low", null] },
+          confidence: {
+            type: ["string", "null"],
+            enum: ["high", "medium", "low", null],
+          },
         },
       },
     },
@@ -284,7 +444,16 @@ const FLOWS_SCHEMA = {
         ],
         properties: {
           entity: { type: "string" },
-          entity_type: { type: "string", enum: ["institution_13f", "insider_form4", "whale_onchain", "fund_flow", "unknown"] },
+          entity_type: {
+            type: "string",
+            enum: [
+              "institution_13f",
+              "insider_form4",
+              "whale_onchain",
+              "fund_flow",
+              "unknown",
+            ],
+          },
           side: { type: "string", enum: ["buy", "sell", "unknown"] },
           date: { type: "string" },
           shares_or_amount: { type: ["string", "null"] },
@@ -295,7 +464,10 @@ const FLOWS_SCHEMA = {
           source_url: { type: ["string", "null"] },
           filed_at: { type: ["string", "null"] },
           note: { type: ["string", "null"] },
-          confidence: { type: ["string", "null"], enum: ["high", "medium", "low", null] },
+          confidence: {
+            type: ["string", "null"],
+            enum: ["high", "medium", "low", null],
+          },
         },
       },
     },
@@ -304,7 +476,10 @@ const FLOWS_SCHEMA = {
   },
 };
 
-const SCHEMAS: Record<ResearchSectionKey, { schema: Record<string, unknown>; system: string }> = {
+const SCHEMAS: Record<
+  ResearchSectionKey,
+  { schema: Record<string, unknown>; system: string }
+> = {
   fundamentals: {
     schema: FUNDAMENTALS_SCHEMA,
     system:
@@ -337,15 +512,18 @@ export async function generateResearchSection(input: {
   const resolved = await resolveSymbol(input.symbol, input.market);
   const ysym = resolved.symbol || yahooSymbol(input.symbol, input.market);
   if (!resolved.verified) {
-    throw new Error(`暂时无法从公开行情或监管资料确认代码 ${ysym}。请检查代码与市场，或稍后重试。`);
+    throw new Error(
+      `暂时无法从公开行情或监管资料确认代码 ${ysym}。请检查代码与市场，或稍后重试。`,
+    );
   }
   let priceContext = "行情数据不可用";
   try {
     const chart = await getChartData(ysym, "1Y");
     const first = chart.candles[0]?.c;
     const last = chart.candles.at(-1)?.c;
-    const yearChange = first && last ? (((last - first) / first) * 100).toFixed(1) : "-";
-    priceContext = `最新价 ${chart.price ?? "-"} ${chart.currency ?? ""}，近一年涨跌 ${yearChange}%（来源 Yahoo Finance，抓取时间 ${new Date().toISOString()}）`;
+    const yearChange =
+      first && last ? (((last - first) / first) * 100).toFixed(1) : "-";
+    priceContext = `最新价 ${chart.price ?? "-"} ${chart.currency ?? ""}，近一年涨跌 ${yearChange}%（来源 ${chart.source ?? "多源免费行情"}，抓取时间 ${new Date().toISOString()}）`;
   } catch {
     /* keep fallback */
   }
@@ -360,6 +538,7 @@ export async function generateResearchSection(input: {
   }
   /** 代码算出的硬数据，直接随 payload 返回，UI 优先展示，不经 AI 改写。 */
   const computed: {
+    earningsFacts?: EarningsFact[];
     forecast?: EarningsForecast | null;
     reactions?: EarningsReaction[];
     seasonality?: Seasonality | null;
@@ -376,15 +555,17 @@ export async function generateResearchSection(input: {
       facts.map((f) => ({ report_date: f.report_date, timing: f.timing })),
     );
     computed.forecast = forecast;
+    computed.earningsFacts = facts;
     computed.reactions = reactions;
 
     grounding = facts.length
       ? `\n真实财报数字（EPS 实际与一致预期来自 Nasdaq，营收与净利润来自 SEC XBRL 申报；必须原样采用并据此计算差异；null 表示该字段无公开数据）：${JSON.stringify(facts)}`
       : "\n未取得第三方财报数字（该市场公开一致预期有限）：无法确认的营收/净利润/EPS 与预期字段必须返回 null，并在 caveats 说明「无一致预期数据」。";
     if (reactions.length) {
-      grounding += `\n财报后真实价格反应（由 Yahoo 日线计算，base_date 为基准收盘日；必须原样采用到 next_day_move_pct / five_day_move_pct，禁止改数）：${JSON.stringify(reactions)}`;
+      grounding += `\n财报后真实价格反应（由多源日线计算，base_date 为基准收盘日；必须原样采用到 next_day_move_pct / five_day_move_pct，禁止改数）：${JSON.stringify(reactions)}`;
     } else {
-      grounding += "\n无法计算财报后价格反应：next_day_move_pct 与 five_day_move_pct 必须返回 null。";
+      grounding +=
+        "\n无法计算财报后价格反应：next_day_move_pct 与 five_day_move_pct 必须返回 null。";
     }
     grounding += forecast
       ? `\n下一次财报前瞻一致预期（来源 ${forecast.source}，必须原样采用；expected_date 为 null 时把 date_confidence 设为 low）：${JSON.stringify(forecast)}`
@@ -394,15 +575,17 @@ export async function generateResearchSection(input: {
   if (input.section === "cycle") {
     const [seasonality, events] = await Promise.all([
       getSeasonality(ysym).catch(() => null),
-      getEventsWindow({ symbol: input.symbol, ysym, lang: input.lang === "en" ? "en" : "zh" }).catch(
-        () => [],
-      ),
+      getEventsWindow({
+        symbol: input.symbol,
+        ysym,
+        lang: input.lang === "en" ? "en" : "zh",
+      }).catch(() => []),
     ]);
     computed.seasonality = seasonality;
     computed.events = events;
 
     grounding = seasonality
-      ? `\n真实月度季节性统计（Yahoo 月线，完整年度 ${seasonality.complete_years} 年；monthly_stats 必须原样采用其 avg_return_pct 与 win_rate_pct，禁止改数）：${JSON.stringify(seasonality)}`
+      ? `\n真实月度季节性统计（多源月线，完整年度 ${seasonality.complete_years} 年；monthly_stats 必须原样采用其 avg_return_pct 与 win_rate_pct，禁止改数）：${JSON.stringify(seasonality)}`
       : "\n未取得月线数据：monthly_stats 必须返回空数组。";
     grounding += events.length
       ? `\n真实前后一个月事件（含发布时间与原文链接，upcoming_events 只能从中挑选，date 用其 at 字段）：${JSON.stringify(events.slice(0, 20))}`
@@ -410,18 +593,24 @@ export async function generateResearchSection(input: {
   }
 
   if (input.section === "flows") {
-    const flows = await getFlowFacts({ symbol: input.symbol, ysym, market: input.market });
+    const flows = await getFlowFacts({
+      symbol: input.symbol,
+      ysym,
+      market: input.market,
+    });
     grounding =
       (flows.records.length
         ? `\n真实资金流申报记录（来源 SEC EDGAR Form 4 / 13F 汇总 / 公链浏览器，必须原样采用，kind 设为 fact，并把 source 与 source_url、filed_at 原样带出）：${JSON.stringify(
             flows.records,
           )}`
         : "\n未取得任何可核实的申报或链上记录：records 必须返回空数组，禁止编造任何主体、数量或金额。") +
-      (flows.gaps.length ? `\n必须写入 data_gaps 的已知缺口：${JSON.stringify(flows.gaps)}` : "");
+      (flows.gaps.length
+        ? `\n必须写入 data_gaps 的已知缺口：${JSON.stringify(flows.gaps)}`
+        : "");
   }
 
   const cfg = SCHEMAS[input.section];
-  const commonUser = `研究标的：${input.symbol}（市场 ${input.market}，Yahoo 代码 ${ysym}）。资金流向时间窗：过去 ${input.lookbackDays} 天。\n实时行情参考：${priceContext}${grounding}`;
+  const commonUser = `研究标的：${input.symbol}（市场 ${input.market}，标准行情代码 ${ysym}）。资金流向时间窗：过去 ${input.lookbackDays} 天。\n实时行情参考：${priceContext}${grounding}`;
   const singleCall = () =>
     aiJson<Record<string, unknown>>({
       model: AI_MODEL_DEEP,
@@ -455,7 +644,13 @@ export async function generateResearchSection(input: {
           user: `${commonUser}\n\nBull case:\n${JSON.stringify(bull)}\n\nBear case:\n${JSON.stringify(bear)}\n请输出完整 fundamentals 结构。`,
         }),
       fallback: singleCall,
-      verify: (output) => verifyAgainstFacts(output, { resolved, verifiedProfile, computed, grounding }),
+      verify: (output) =>
+        verifyAgainstFacts(output, {
+          resolved,
+          verifiedProfile,
+          computed,
+          grounding,
+        }),
       synthesizerModel: AI_MODEL_DEEP,
     });
     ai = result.output;
@@ -466,9 +661,10 @@ export async function generateResearchSection(input: {
 
   if (input.section === "fundamentals" && verifiedProfile) {
     const generated = ai["company_profile"];
-    const generatedProfile = generated && typeof generated === "object" && !Array.isArray(generated)
-      ? generated as Record<string, unknown>
-      : {};
+    const generatedProfile =
+      generated && typeof generated === "object" && !Array.isArray(generated)
+        ? (generated as Record<string, unknown>)
+        : {};
     ai["company_profile"] = {
       ...generatedProfile,
       legal_name: verifiedProfile.name ?? resolved.name,
@@ -478,7 +674,10 @@ export async function generateResearchSection(input: {
       founded: verifiedProfile.founded,
       headquarters: verifiedProfile.headquarters,
       employees: verifiedProfile.employees,
-      market_cap: verifiedProfile.marketCap == null ? null : String(verifiedProfile.marketCap),
+      market_cap:
+        verifiedProfile.marketCap == null
+          ? null
+          : String(verifiedProfile.marketCap),
       website: verifiedProfile.website,
       kind: "fact",
       source: verifiedProfile.source,
@@ -486,5 +685,9 @@ export async function generateResearchSection(input: {
     };
   }
 
-  return { ...ai, _facts: computed, ...(debateTrace ? { _debate: debateTrace } : {}) };
+  return {
+    ...ai,
+    _facts: computed,
+    ...(debateTrace ? { _debate: debateTrace } : {}),
+  };
 }

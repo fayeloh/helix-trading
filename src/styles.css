@@ -2,6 +2,10 @@
 @source "../src";
 @import "tw-animate-css";
 
+@keyframes helix-globe-spin { from { transform: rotateY(-18deg) rotateX(8deg); } to { transform: rotateY(342deg) rotateX(8deg); } }
+.helix-globe { transform-style: preserve-3d; background: radial-gradient(circle at 35% 28%, rgba(104,224,211,.35), transparent 14%), radial-gradient(circle at 65% 60%, rgba(30,108,126,.75), rgba(7,17,31,.98) 66%), linear-gradient(110deg, rgba(57,214,197,.65), transparent 26%, rgba(121,169,255,.35) 62%, transparent 85%); animation: helix-globe-spin 22s linear infinite; }
+.helix-globe-grid { opacity: .42; background: repeating-linear-gradient(0deg, transparent 0 19px, rgba(121,169,255,.38) 20px 21px), repeating-linear-gradient(90deg, transparent 0 24px, rgba(57,214,197,.38) 25px 26px); border-radius: 50%; transform: perspective(420px) rotateX(58deg) scaleY(.72); }
+
 @custom-variant dark (&:is(.dark *));
 
 /*

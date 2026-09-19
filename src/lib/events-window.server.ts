@@ -2,6 +2,8 @@ import { getUsEarningsForecast } from "./earnings-facts.server";
 import { getEarningsFacts } from "./fundamentals.server";
 import { googleNews, yahooNews, type NewsItem } from "./news.server";
 import { readCache, writeCache } from "./market.server";
+import { fetchSeries } from "./market.server";
+import { impactOfTitle } from "./macro-briefing.news.server";
 
 export type WindowEvent = {
   kind: "earnings" | "news" | "macro";
@@ -12,6 +14,8 @@ export type WindowEvent = {
   source: string;
   url: string | null;
   future: boolean;
+  price_change_24h_pct: number | null;
+  forecast_impact: "bullish" | "bearish" | "neutral";
 };
 
 const DAY = 86_400_000;
@@ -26,6 +30,8 @@ function toEvent(n: NewsItem, kind: WindowEvent["kind"]): WindowEvent | null {
     source: n.source,
     url: n.url || null,
     future: new Date(n.publishedAt).getTime() > Date.now(),
+    price_change_24h_pct: null,
+    forecast_impact: impactOfTitle(n.title),
   };
 }
 
@@ -62,6 +68,9 @@ export async function getEventsWindow(input: {
   ]);
 
   const now = Date.now();
+  const candles = await fetchSeries(input.ysym, "3mo", "1d").then((x) => x.candles).catch(() => []);
+  const closeAtOrBefore = (ts: number) => candles.filter((c) => c.t <= ts).at(-1);
+  const nextCloseAfter = (ts: number) => candles.find((c) => c.t > ts);
   const events: WindowEvent[] = [];
 
   if (forecast?.expected_date) {
@@ -108,7 +117,14 @@ export async function getEventsWindow(input: {
       seen.add(k);
       return true;
     })
-    .sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime())
+    .map((e) => {
+      if (e.future || e.date_only || !candles.length) return e;
+      const at = new Date(e.at).getTime();
+      const base = closeAtOrBefore(at);
+      const next = nextCloseAfter(at);
+      return base && next && base.c ? { ...e, price_change_24h_pct: Math.round(((next.c - base.c) / base.c) * 10000) / 100 } : e;
+    })
+    .sort((a, b) => new Date(a.at).getTime() - new Date(b.at).getTime())
     .slice(0, 40);
 
   try {

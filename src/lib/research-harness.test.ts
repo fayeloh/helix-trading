@@ -1,6 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { runDebateHarness, verifyAgainstFacts, type DebateCase } from "./research-harness.server";
+import {
+  runDebateHarness,
+  verifyAgainstFacts,
+  type DebateCase,
+} from "./research-harness.server";
 
 const debateCase: DebateCase = {
   thesis: "grounded thesis",
@@ -47,6 +51,26 @@ describe("runDebateHarness", () => {
     expect(result.trace.fallback_reason).toContain("gateway unavailable");
     expect(synthesize).not.toHaveBeenCalled();
   });
+
+  it("falls back when synthesis fails", async () => {
+    const fallback = vi.fn(async () => ({ value: 7 }));
+    const result = await runDebateHarness({
+      bull: async () => debateCase,
+      bear: async () => debateCase,
+      synthesize: async () => {
+        throw new Error("invalid structured output");
+      },
+      fallback,
+      verify: () => ({ passed: true, checked_values: 0, violations: [] }),
+      synthesizerModel: "deep",
+    });
+
+    expect(result.output.value).toBe(7);
+    expect(result.trace.architecture).toBe("single-call-fallback");
+    expect(result.trace.agents.synthesizer.status).toBe("failed");
+    expect(result.trace.fallback_reason).toContain("invalid structured output");
+    expect(fallback).toHaveBeenCalledOnce();
+  });
 });
 
 describe("verifyAgainstFacts", () => {
@@ -62,12 +86,24 @@ describe("verifyAgainstFacts", () => {
     );
     expect(result.passed).toBe(true);
     expect(result.checked_values).toBe(2);
+    expect(result.violations).toEqual([]);
 
     const bad = verifyAgainstFacts(
-      { claims: [{ kind: "fact", text: "Revenue grew 99%", source: "filing" }] },
+      {
+        claims: [{ kind: "fact", text: "Revenue grew 99%", source: "filing" }],
+      },
       { revenue_growth: "25%" },
     );
     expect(bad.passed).toBe(false);
     expect(bad.violations[0]?.value).toBe("99%");
+  });
+
+  it("does not verify numeric claims marked as inference", () => {
+    const result = verifyAgainstFacts(
+      { claims: [{ kind: "inference", text: "Revenue could grow 99%" }] },
+      { revenue_growth: "25%" },
+    );
+
+    expect(result).toEqual({ passed: true, checked_values: 0, violations: [] });
   });
 });

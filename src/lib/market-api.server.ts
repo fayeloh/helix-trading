@@ -16,6 +16,7 @@ export type IndexRow = {
   group: string;
   price: number | null;
   currency: string | null;
+  source?: string | undefined;
   days: DailyChange[];
   error?: string;
 };
@@ -34,9 +35,11 @@ function hashKey(defs: BoardDef[]): string {
   return (h >>> 0).toString(36);
 }
 
-export async function getIndexBoardData(defs?: BoardDef[]): Promise<IndexBoard> {
+export async function getIndexBoardData(
+  defs?: BoardDef[],
+): Promise<IndexBoard> {
   const list: BoardDef[] = defs && defs.length > 0 ? defs : INDEX_BOARD;
-  const cacheKey = `index_board_v2_${hashKey(list)}`;
+  const cacheKey = `index_board_v4_${hashKey(list)}`;
   const cached = await readCache<IndexBoard>(cacheKey);
   if (cached) return cached;
 
@@ -50,6 +53,7 @@ export async function getIndexBoardData(defs?: BoardDef[]): Promise<IndexBoard> 
           group: def.group,
           price: series.price,
           currency: series.currency,
+          source: series.source,
           days: dailyChanges(series.candles, 5),
         };
       } catch (e) {
@@ -66,7 +70,9 @@ export async function getIndexBoardData(defs?: BoardDef[]): Promise<IndexBoard> 
     }),
   );
 
-  const hasUsableRows = rows.some((row) => row.days.length > 0 || row.price != null);
+  const hasUsableRows = rows.some(
+    (row) => row.days.length > 0 || row.price != null,
+  );
   if (!hasUsableRows) {
     const stale = await readStaleCache<IndexBoard>(cacheKey);
     if (stale) return stale;
@@ -101,7 +107,10 @@ const ATTRIBUTION_SCHEMA = {
           driver: { type: "string", description: "一句话主因，不超过 30 字" },
           logic: { type: "string", description: "逻辑链条，1-2 句" },
           kind: { type: "string", enum: ["fact", "inference"] },
-          confidence: { type: ["string", "null"], enum: ["high", "medium", "low", null] },
+          confidence: {
+            type: ["string", "null"],
+            enum: ["high", "medium", "low", null],
+          },
         },
       },
     },
@@ -115,7 +124,9 @@ export async function getAttributionsData(
   const board = await getIndexBoardData(defs);
   const today = new Date().toISOString().slice(0, 10);
   const cacheKey = `index_attribution_${today}_${hashKey(board.rows)}`;
-  const cached = await readCache<{ items: Attribution[]; caveats: string }>(cacheKey);
+  const cached = await readCache<{ items: Attribution[]; caveats: string }>(
+    cacheKey,
+  );
   if (cached) return cached;
 
   const lines = board.rows
@@ -135,7 +146,7 @@ export async function getAttributionsData(
     schemaName: "index_attribution",
     schema: ATTRIBUTION_SCHEMA,
     system: `${GUARDRAILS}\n你在为全球指数看板撰写每日涨跌归因。归因必须给出可验证的驱动因素（宏观数据、政策、财报、资金面、事件）与逻辑链。若你无法确认当日具体消息，driver 写 "unknown"，logic 说明只能给出与波动幅度一致的通用可能性，kind 设为 "inference"，confidence 设为 "low"。`,
-    user: `以下是真实行情数据（来源 Yahoo Finance，抓取时间 ${board.fetchedAt}）。请为每个标的的最新交易日涨跌给出归因，symbol 必须与输入完全一致。\n\n${lines}`,
+    user: `以下是真实行情数据（来自 FRED、Coinbase、CoinGecko、Stooq、Twelve Data、Alpha Vantage、Finnhub、FMP 或 Yahoo Finance 的可用源，抓取时间 ${board.fetchedAt}）。请为每个标的的最新交易日涨跌给出归因，symbol 必须与输入完全一致。\n\n${lines}`,
   });
 
   await writeCache(cacheKey, result, 60 * 60 * 6);
@@ -147,10 +158,14 @@ export type ChartData = {
   currency: string | null;
   price: number | null;
   previousClose: number | null;
+  source?: string | undefined;
   candles: Candle[];
 };
 
-const RANGE_MAP: Record<string, { range: string; interval: string; ttl: number }> = {
+const RANGE_MAP: Record<
+  string,
+  { range: string; interval: string; ttl: number }
+> = {
   "1D": { range: "1d", interval: "5m", ttl: 300 },
   "5D": { range: "5d", interval: "30m", ttl: 600 },
   "1M": { range: "1mo", interval: "1d", ttl: 1800 },
@@ -158,9 +173,12 @@ const RANGE_MAP: Record<string, { range: string; interval: string; ttl: number }
   "1Y": { range: "1y", interval: "1d", ttl: 3600 },
 };
 
-export async function getChartData(symbol: string, rangeKey: string): Promise<ChartData> {
+export async function getChartData(
+  symbol: string,
+  rangeKey: string,
+): Promise<ChartData> {
   const cfg = RANGE_MAP[rangeKey] ?? RANGE_MAP["1M"]!;
-  const cacheKey = `chart_${symbol}_${rangeKey}`;
+  const cacheKey = `chart_v2_${symbol}_${rangeKey}`;
   const cached = await readCache<ChartData>(cacheKey);
   if (cached) return cached;
 
@@ -170,6 +188,7 @@ export async function getChartData(symbol: string, rangeKey: string): Promise<Ch
     currency: series.currency,
     price: series.price,
     previousClose: series.previousClose,
+    source: series.source,
     candles: series.candles,
   };
   await writeCache(cacheKey, payload, cfg.ttl);
@@ -188,13 +207,25 @@ export function yahooSymbol(symbol: string, market: string): string {
 
 export async function getQuotesData(
   items: { symbol: string; market: string }[],
-): Promise<Record<string, { price: number | null; currency: string | null; changePct: number | null }>> {
-  const out: Record<string, { price: number | null; currency: string | null; changePct: number | null }> = {};
+): Promise<
+  Record<
+    string,
+    { price: number | null; currency: string | null; changePct: number | null }
+  >
+> {
+  const out: Record<
+    string,
+    { price: number | null; currency: string | null; changePct: number | null }
+  > = {};
   await Promise.all(
     items.map(async (it) => {
       const y = yahooSymbol(it.symbol, it.market);
       const key = `quote_${y}`;
-      const cached = await readCache<{ price: number | null; currency: string | null; changePct: number | null }>(key);
+      const cached = await readCache<{
+        price: number | null;
+        currency: string | null;
+        changePct: number | null;
+      }>(key);
       if (cached) {
         out[it.symbol] = cached;
         return;

@@ -2,6 +2,7 @@ import { ET_ZONE } from "./time-format";
 import { readCache, writeCache } from "./market.server";
 import { googleNews, rssFeed, type NewsItem } from "./news.server";
 import { translateTitlesToZh } from "./translate.server";
+import { aiJson, AI_MODEL_FAST, GUARDRAILS } from "./ai.server";
 
 import type {
   HeadlineImpact,
@@ -230,7 +231,7 @@ export async function getLiveHeadlines(limit = 5): Promise<TopHeadline[]> {
     })
     .filter((h): h is TopHeadline => !!h);
 
-  if (out.length) await writeCache(cacheKey, out, 300);
+  if (out.length) await writeCache(cacheKey, out, 60);
   return out;
 }
 
@@ -283,7 +284,8 @@ export async function getLiveCalendar(limit = 12): Promise<MacroCalendarEvent[]>
   const cached = await readCache<MacroCalendarEvent[]>(cacheKey);
   if (cached?.length) return cached;
 
-  const days = [etDate(0), etDate(1), etDate(2)];
+  // 只拉取当前时刻之后的一周，随后仅保留高重要性事件，避免把已过事件混入日历。
+  const days = Array.from({ length: 8 }, (_, i) => etDate(i));
   const nowEt = etStamp();
 
   const econPages = await Promise.all(
@@ -294,7 +296,7 @@ export async function getLiveCalendar(limit = 12): Promise<MacroCalendarEvent[]>
     ),
   );
   const earnPages = await Promise.all(
-    days.slice(0, 2).map((d) =>
+    days.map((d) =>
       nasdaqJson<{ data?: { rows?: NasdaqEarningsRow[] } }>(
         `https://api.nasdaq.com/api/calendar/earnings?date=${d}`,
       ).then((j) => ({ date: d, rows: j?.data?.rows ?? [] })),
@@ -317,6 +319,10 @@ export async function getLiveCalendar(limit = 12): Promise<MacroCalendarEvent[]>
         event: row.consensus ? `${label}（市场预期 ${row.consensus}）` : label,
         time,
         importance: importanceOfEvent(row),
+        impact: "neutral",
+        affected_sectors: [],
+        impact_reasoning: "事件尚未公布，等待实际值与市场预期的差异。",
+        is_forecast: true,
         url: "https://www.nasdaq.com/market-activity/economic-calendar",
       });
     }
@@ -336,14 +342,44 @@ export async function getLiveCalendar(limit = 12): Promise<MacroCalendarEvent[]>
         }`,
         time,
         importance: cap >= 100_000_000_000 ? "high" : "medium",
+        impact: "neutral",
+        affected_sectors: [],
+        impact_reasoning: "财报尚未公布，方向取决于实际数据与一致预期的差异。",
+        is_forecast: true,
         url: `https://www.nasdaq.com/market-activity/stocks/${row.symbol.toLowerCase()}/earnings`,
       });
     }
   }
 
   const rank: Record<Importance, number> = { high: 0, medium: 1, low: 2 };
-  out.sort((a, b) => rank[a.importance] - rank[b.importance] || a.time.localeCompare(b.time));
-  const picked = out.slice(0, limit).sort((a, b) => a.time.localeCompare(b.time));
+  const high = out.filter((e) => e.importance === "high");
+  const ranked = high.length ? high : out.filter((e) => e.importance === "medium");
+  ranked.sort((a, b) => rank[a.importance] - rank[b.importance] || a.time.localeCompare(b.time));
+  const picked = ranked.slice(0, limit).sort((a, b) => a.time.localeCompare(b.time));
+  if (picked.length) {
+    try {
+      const schema = {
+        type: "object", additionalProperties: false, required: ["items"], properties: {
+          items: { type: "array", items: { type: "object", additionalProperties: false, required: ["index", "impact", "affected_sectors", "reasoning"], properties: {
+            index: { type: "number" }, impact: { type: "string", enum: ["bullish", "bearish", "neutral"] },
+            affected_sectors: { type: "array", items: { type: "string" } }, reasoning: { type: "string" },
+          } } },
+        },
+      };
+      const ai = await aiJson<{ items: { index: number; impact: "bullish" | "bearish" | "neutral"; affected_sectors: string[]; reasoning: string }[] }>({
+        model: AI_MODEL_FAST, schemaName: "macro_calendar_impact", schema,
+        system: `${GUARDRAILS}\n你只做事件影响情景推演，不把预测写成事实。若数据高于预期/低于预期方向不确定，使用 neutral。`,
+        user: picked.map((e, i) => `${i}. ${e.event} | ${e.time}`).join("\n"),
+      });
+      for (const item of ai.items) {
+        const e = picked[item.index];
+        if (!e) continue;
+        e.impact = item.impact; e.affected_sectors = item.affected_sectors.slice(0, 5); e.impact_reasoning = item.reasoning;
+      }
+    } catch {
+      // AI 不可用时保留中性预测，不伪造方向。
+    }
+  }
   if (picked.length) await writeCache(cacheKey, picked, 900);
   return picked;
 }

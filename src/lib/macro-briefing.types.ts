@@ -45,6 +45,11 @@ export type MacroCalendarEvent = {
   event: string;
   time: string;
   importance: Importance;
+  /** 事件发生前的方向推演；只用于预期，不代表已发生事实。 */
+  impact?: HeadlineImpact;
+  affected_sectors?: string[];
+  impact_reasoning?: string;
+  is_forecast?: boolean;
   /** 事件详情/官方发布页链接（可选）。 */
   url?: string;
 };

@@ -9,6 +9,11 @@
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
+    "lint:harness": "eslint src/lib/research-harness.server.ts src/lib/research-harness.test.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "verify": "npm run lint:harness && npm run typecheck && npm test",
     "format": "prettier --write ."
   },
   "overrides": {

@@ -98,6 +98,7 @@ export function useMacroBriefing() {
     queryKey: ["macro-briefing"],
     queryFn: fetchMacroBriefing,
     staleTime: 5 * 60 * 1000,
+    refetchInterval: 60 * 1000,
     retry: 2,
     retryDelay: (attempt) => 1500 * (attempt + 1),
   });

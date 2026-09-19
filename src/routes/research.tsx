@@ -494,12 +494,14 @@ function SectionBody({ section, payload }: { section: ResearchSection; payload: 
   if (section === "earnings") {
     const next = p["next_report"] ?? {};
     const facts = (p["_facts"] ?? {}) as Record<string, any>;
+    const verifiedFacts = arr<any>(facts["earningsFacts"]);
     const forecast = facts["forecast"] as Record<string, any> | null | undefined;
     const reactions = arr<any>(facts["reactions"]);
     const reactionFor = (date?: string | null) =>
       date ? reactions.find((x: any) => x.report_date === date) : undefined;
     return (
       <div className="space-y-4">
+        {verifiedFacts.length > 0 ? <Card><CardHeader><CardTitle className="text-base">真实财报数据</CardTitle><CardDescription className="text-xs">来源：Nasdaq / SEC XBRL；同比按上一年同期申报值计算，缺失字段保留为空</CardDescription></CardHeader><CardContent className="overflow-x-auto"><table className="w-full min-w-[720px] text-xs"><thead><tr className="text-muted-foreground"><th className="py-1 text-left">期间</th><th className="py-1 text-right">营收实际</th><th className="py-1 text-right">营收同比</th><th className="py-1 text-right">净利润实际</th><th className="py-1 text-right">净利润同比</th><th className="py-1 text-right">EPS 实际 / 预期</th></tr></thead><tbody>{verifiedFacts.map((f: any, i: number) => <tr key={i} className="border-t border-border/60"><td className="py-1.5">{f.period ?? "—"}<br /><span className="text-muted-foreground">{f.report_date ?? "—"}</span></td><td className="tabular py-1.5 text-right">{f.revenue_actual ?? "—"}</td><td className={`tabular py-1.5 text-right ${toneClass(f.revenue_yoy_pct)}`}>{f.revenue_yoy_pct == null ? "—" : fmtPct(f.revenue_yoy_pct)}</td><td className="tabular py-1.5 text-right">{f.net_income_actual ?? "—"}</td><td className={`tabular py-1.5 text-right ${toneClass(f.net_income_yoy_pct)}`}>{f.net_income_yoy_pct == null ? "—" : fmtPct(f.net_income_yoy_pct)}</td><td className="tabular py-1.5 text-right">{f.eps_actual ?? "—"} / {f.eps_estimate ?? "—"}</td></tr>)}</tbody></table></CardContent></Card> : null}
         <div className="space-y-3">
           {arr<any>(p["recent_reports"]).map((r: any, i: number) => {
             const react = reactionFor(r.report_date);
@@ -1076,6 +1078,9 @@ function EventTimelineCard({ events, aiEvents }: { events: any[]; aiEvents: any[
                 ) : null}
               </div>
               <p className="mt-1 text-sm leading-relaxed">{e.title}</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {e.future ? `未发生事件预测：${e.forecast_impact === "bullish" ? "利多" : e.forecast_impact === "bearish" ? "利空" : "中性"}` : `发布后下一交易日涨跌：${e.price_change_24h_pct == null ? "—" : `${e.price_change_24h_pct >= 0 ? "+" : ""}${e.price_change_24h_pct.toFixed(2)}%`}`}
+              </p>
               <p className="mt-0.5 text-[11px] text-muted-foreground">
                 来源 {e.source}
                 {e.url ? (

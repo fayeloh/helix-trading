@@ -1,4 +1,9 @@
-import { fetchSeries, readCache, writeCache, type Candle } from "./market.server";
+import {
+  fetchSeries,
+  readCache,
+  writeCache,
+  type Candle,
+} from "./market.server";
 
 export type MonthStat = {
   month: number;
@@ -33,7 +38,10 @@ function r2(v: number): number {
  * 纯函数：用月线算季节性。除月均涨跌与胜率外，还统计「年度最高价 / 最低价出现在该月」的次数，
  * 只统计有完整 12 根月线的年份，避免残缺年份污染高低点口径。
  */
-export function computeSeasonality(symbol: string, candles: Candle[]): Seasonality {
+export function computeSeasonality(
+  symbol: string,
+  candles: Candle[],
+): Seasonality {
   const byYear = new Map<number, { m: number; c: Candle }[]>();
   for (const c of candles) {
     const d = new Date(c.t);
@@ -78,7 +86,9 @@ export function computeSeasonality(symbol: string, candles: Candle[]): Seasonali
     months.push({
       month: m,
       samples: rs.length,
-      avg_return_pct: rs.length ? r2(rs.reduce((a, b) => a + b, 0) / rs.length) : null,
+      avg_return_pct: rs.length
+        ? r2(rs.reduce((a, b) => a + b, 0) / rs.length)
+        : null,
       win_rate_pct: rs.length ? r2((wins / rs.length) * 100) : null,
       best_return_pct: rs.length ? r2(Math.max(...rs)) : null,
       worst_return_pct: rs.length ? r2(Math.min(...rs)) : null,
@@ -100,16 +110,21 @@ export function computeSeasonality(symbol: string, candles: Candle[]): Seasonali
     first_year: years[0] ?? null,
     last_year: years.at(-1) ?? null,
     strongest_months: ranked.slice(0, 3).map((x) => x.month),
-    weakest_months: ranked.slice(-3).map((x) => x.month).reverse(),
+    weakest_months: ranked
+      .slice(-3)
+      .map((x) => x.month)
+      .reverse(),
     top_year_high_month: maxHigh > 0 ? highCount.indexOf(maxHigh) : null,
     top_year_low_month: maxLow > 0 ? lowCount.indexOf(maxLow) : null,
-    source: "Yahoo Finance 月线",
+    source: "多源免费行情月线",
     as_of: new Date().toISOString(),
   };
 }
 
 /** 取近 10 年月线并聚合季节性，缓存 24 小时。 */
-export async function getSeasonality(ysym: string): Promise<Seasonality | null> {
+export async function getSeasonality(
+  ysym: string,
+): Promise<Seasonality | null> {
   const cacheKey = `seasonality_v1_${ysym}`;
   try {
     const cached = await readCache<Seasonality>(cacheKey);

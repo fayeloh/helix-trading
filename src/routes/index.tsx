@@ -6,14 +6,27 @@ import { ArrowRight, BookOpenCheck, Newspaper, Wallet } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAccounts } from "@/hooks/useAccounts";
 import { useAuth } from "@/hooks/useAuth";
 import { useWatchlist } from "@/hooks/useWatchlist";
 import { supabase } from "@/integrations/supabase/client";
 import { getIndexBoard, getQuotes } from "@/lib/market.functions";
-import { buildPortfolio, fmtMoney, fmtPct, toneClass, type Holding, type Quote } from "@/lib/portfolio";
+import {
+  buildPortfolio,
+  fmtMoney,
+  fmtPct,
+  toneClass,
+  type Holding,
+  type Quote,
+} from "@/lib/portfolio";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -27,7 +40,8 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: "Helix Trading — AI 辅助交易分析终端" },
       {
         property: "og:description",
-        content: "结构化基本面依据 + 事件日历 + 纪律检查，让每一笔交易都有据可循。",
+        content:
+          "结构化基本面依据 + 事件日历 + 纪律检查，让每一笔交易都有据可循。",
       },
     ],
   }),
@@ -54,20 +68,29 @@ function Dashboard() {
     },
   });
 
-  const quoteItems = (holdings.data ?? []).map((h) => ({ symbol: h.symbol, market: h.market }));
+  const quoteItems = (holdings.data ?? []).map((h) => ({
+    symbol: h.symbol,
+    market: h.market,
+  }));
   const symbols = quoteItems.map((q) => q.symbol);
 
   const quotes = useQuery({
     queryKey: ["quotes", symbols.join(",")],
     enabled: symbols.length > 0,
     staleTime: 60 * 1000,
-    queryFn: async () => (await quotesFn({ data: { items: quoteItems } })) as Record<string, Quote>,
+    refetchInterval: 60 * 1000,
+    queryFn: async () =>
+      (await quotesFn({ data: { items: quoteItems } })) as Record<
+        string,
+        Quote
+      >,
   });
 
   const board = useQuery({
     queryKey: ["index-board", watchlist.map((w) => w.symbol).join(",")],
     queryFn: async () => await boardFn({ data: { defs: watchlist } }),
     staleTime: 5 * 60 * 1000,
+    refetchInterval: 60 * 1000,
   });
 
   const latestBriefing = useQuery({
@@ -98,7 +121,11 @@ function Dashboard() {
   });
 
   const base = activeAccount?.base_currency ?? "USD";
-  const portfolio = buildPortfolio(holdings.data ?? [], quotes.data ?? {}, base);
+  const portfolio = buildPortfolio(
+    holdings.data ?? [],
+    quotes.data ?? {},
+    base,
+  );
 
   const movers = [...portfolio.rows]
     .filter((r) => r.changePct != null)
@@ -116,7 +143,8 @@ function Dashboard() {
         <div>
           <h1 className="text-xl font-semibold">交易台</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            账户 {activeAccount?.name ?? "未选择"} · 基准货币 {base} · 展示时区 Asia/Shanghai
+            账户 {activeAccount?.name ?? "未选择"} · 基准货币 {base} · 展示时区
+            Asia/Shanghai
           </p>
         </div>
 
@@ -125,7 +153,9 @@ function Dashboard() {
             <CardContent className="py-4">
               <div className="text-[11px] text-muted-foreground">总市值</div>
               <div className="tabular mt-1 text-lg font-semibold">
-                {holdings.isLoading ? "…" : fmtMoney(portfolio.totalValue, base)}
+                {holdings.isLoading
+                  ? "…"
+                  : fmtMoney(portfolio.totalValue, base)}
               </div>
             </CardContent>
           </Card>
@@ -140,15 +170,21 @@ function Dashboard() {
           <Card>
             <CardContent className="py-4">
               <div className="text-[11px] text-muted-foreground">浮动盈亏</div>
-              <div className={`tabular mt-1 text-lg font-semibold ${toneClass(portfolio.totalPnl)}`}>
+              <div
+                className={`tabular mt-1 text-lg font-semibold ${toneClass(portfolio.totalPnl)}`}
+              >
                 {fmtMoney(portfolio.totalPnl, base)}
-                <span className="ml-2 text-xs">{fmtPct(portfolio.totalPnlPct)}</span>
+                <span className="ml-2 text-xs">
+                  {fmtPct(portfolio.totalPnlPct)}
+                </span>
               </div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="py-4">
-              <div className="text-[11px] text-muted-foreground">持仓 / 进行中交易</div>
+              <div className="text-[11px] text-muted-foreground">
+                持仓 / 进行中交易
+              </div>
               <div className="tabular mt-1 text-lg font-semibold">
                 {portfolio.rows.length} / {openTrades.data ?? 0}
               </div>
@@ -164,7 +200,9 @@ function Dashboard() {
                   <Wallet className="size-4 text-primary" />
                   今日持仓波动
                 </CardTitle>
-                <CardDescription className="text-xs">按绝对涨跌幅排序 · Yahoo Finance 延迟行情</CardDescription>
+                <CardDescription className="text-xs">
+                  按绝对涨跌幅排序 · 多源免费延迟行情
+                </CardDescription>
               </div>
               <Button asChild size="sm" variant="ghost">
                 <Link to="/accounts">
@@ -182,15 +220,22 @@ function Dashboard() {
               ) : (
                 <div className="divide-y divide-border">
                   {movers.map((r) => (
-                    <div key={r.id} className="flex items-center justify-between py-2.5">
+                    <div
+                      key={r.id}
+                      className="flex items-center justify-between py-2.5"
+                    >
                       <div>
-                        <div className="tabular text-sm font-medium">{r.symbol}</div>
+                        <div className="tabular text-sm font-medium">
+                          {r.symbol}
+                        </div>
                         <div className="text-[11px] text-muted-foreground">
                           {r.display_name ?? r.sector ?? r.market}
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className={`tabular text-sm ${toneClass(r.changePct)}`}>
+                        <div
+                          className={`tabular text-sm ${toneClass(r.changePct)}`}
+                        >
                           {fmtPct(r.changePct)}
                         </div>
                         <div className="tabular text-[11px] text-muted-foreground">
@@ -207,7 +252,9 @@ function Dashboard() {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-base">全球指数速览</CardTitle>
-              <CardDescription className="text-xs">最新交易日涨跌</CardDescription>
+              <CardDescription className="text-xs">
+                最新交易日涨跌
+              </CardDescription>
             </CardHeader>
             <CardContent>
               {board.isLoading ? (
@@ -222,7 +269,9 @@ function Dashboard() {
                       className="flex items-center justify-between py-2 hover:text-primary"
                     >
                       <span className="text-xs">{row.label}</span>
-                      <span className={`tabular text-xs ${toneClass(row.days.at(-1)?.changePct ?? null)}`}>
+                      <span
+                        className={`tabular text-xs ${toneClass(row.days.at(-1)?.changePct ?? null)}`}
+                      >
                         {fmtPct(row.days.at(-1)?.changePct ?? null)}
                       </span>
                     </Link>
@@ -253,7 +302,8 @@ function Dashboard() {
             </CardHeader>
             <CardContent>
               <p className="line-clamp-4 text-sm leading-relaxed text-muted-foreground">
-                {summaryText ?? "到「简报」页生成今日宏观与持仓定制简报，包含事件时间、利多利空与观察要点。"}
+                {summaryText ??
+                  "到「简报」页生成今日宏观与持仓定制简报，包含事件时间、利多利空与观察要点。"}
               </p>
               <Button asChild size="sm" variant="ghost" className="mt-3">
                 <Link to="/briefing">
@@ -279,10 +329,15 @@ function Dashboard() {
                   <div key={s.name}>
                     <div className="flex items-center justify-between text-xs">
                       <span>{s.name}</span>
-                      <span className="tabular text-muted-foreground">{s.pct.toFixed(1)}%</span>
+                      <span className="tabular text-muted-foreground">
+                        {s.pct.toFixed(1)}%
+                      </span>
                     </div>
                     <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                      <div className="h-full rounded-full bg-primary" style={{ width: `${s.pct}%` }} />
+                      <div
+                        className="h-full rounded-full bg-primary"
+                        style={{ width: `${s.pct}%` }}
+                      />
                     </div>
                   </div>
                 ))

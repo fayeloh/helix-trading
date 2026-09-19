@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, ClipboardList, Plus, Target } from "lucide-react";
 import { useState } from "react";
@@ -15,7 +15,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -76,9 +75,28 @@ export const Route = createFileRoute("/journal")({
 
 function JournalPage() {
   const { user } = useAuth();
-  const { activeAccountId } = useAccounts();
+  const { activeAccountId, isLoading: accountsLoading } = useAccounts();
+  const navigate = useNavigate();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
+
+  const openNewEntry = () => {
+    if (!user) {
+      toast.error("请先登录");
+      navigate({ to: "/auth" });
+      return;
+    }
+    if (accountsLoading) {
+      toast.info("交易账户正在加载，请稍后再试");
+      return;
+    }
+    if (!activeAccountId) {
+      toast.error("请先创建或选择一个交易账户");
+      navigate({ to: "/accounts" });
+      return;
+    }
+    setOpen(true);
+  };
 
   const templates = useQuery({
     queryKey: ["checklist-templates", user?.id],
@@ -138,9 +156,11 @@ function JournalPage() {
 
   const create = useMutation({
     mutationFn: async (payload: Record<string, unknown>) => {
+      if (!user) throw new Error("请先登录");
+      if (!activeAccountId) throw new Error("请先创建或选择一个交易账户");
       const { error } = await supabase.from("journal_entries").insert({
         ...payload,
-        user_id: user!.id,
+        user_id: user.id,
         account_id: activeAccountId,
       } as never);
       if (error) throw error;
@@ -182,12 +202,10 @@ function JournalPage() {
             </p>
           </div>
           <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm" disabled={!activeAccountId}>
-                <Plus className="mr-1 size-3.5" />
-                新建交易记录
-              </Button>
-            </DialogTrigger>
+            <Button size="sm" onClick={openNewEntry}>
+              <Plus className="mr-1 size-3.5" />
+              新建交易记录
+            </Button>
             <NewEntryDialog
               checklistSource={defaultChecklist}
               defaultStopPct={rules.data?.default_stop_pct ?? 8}

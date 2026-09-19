@@ -15,3 +15,19 @@ Harness instead of one direct model call:
 The payload includes `_debate` with agent status, durations, fallback reason, and
 verifier output. `_facts` remains unchanged. This keeps the migration observable
 and reversible while allowing the Harness to be evaluated independently.
+
+## Minimum engineering gate
+
+Run the following command before committing Harness or research workflow changes:
+
+```bash
+npm run verify
+```
+
+The gate passes only when Harness-scoped ESLint, project-wide TypeScript
+checking, and all Vitest tests pass. The Harness smoke tests cover the
+multi-agent success path, analyst failure fallback, synthesizer failure
+fallback, grounded fact verification, and the boundary between facts and
+inferences. The existing full-project `npm run lint` command remains available,
+but its pre-existing repository-wide formatting backlog is intentionally outside
+this MVP gate.

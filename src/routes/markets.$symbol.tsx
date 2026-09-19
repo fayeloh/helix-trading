@@ -3,11 +3,25 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { ArrowLeft } from "lucide-react";
 import { useState } from "react";
-import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { INDEX_LABELS } from "@/lib/constants";
 import { getChart } from "@/lib/market.functions";
@@ -24,10 +38,13 @@ export const Route = createFileRoute("/markets/$symbol")({
         { title: `${label} 走势图表 — Helix Trading` },
         {
           name: "description",
-          content: `${label}（${raw}）的分时与日线走势，支持 1D / 5D / 1M / 3M / 1Y 区间切换。数据来源 Yahoo Finance。`,
+          content: `${label}（${raw}）的分时与日线走势，支持 1D / 5D / 1M / 3M / 1Y 区间切换。数据来自多源免费行情。`,
         },
         { property: "og:title", content: `${label} 走势图表 — Helix Trading` },
-        { property: "og:description", content: `${label} 多区间走势与涨跌统计。` },
+        {
+          property: "og:description",
+          content: `${label} 多区间走势与涨跌统计。`,
+        },
       ],
     };
   },
@@ -56,7 +73,12 @@ function SymbolChartPage() {
     t: c.t,
     label:
       range === "1D" || range === "5D"
-        ? new Date(c.t).toLocaleString("zh-CN", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })
+        ? new Date(c.t).toLocaleString("zh-CN", {
+            month: "numeric",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          })
         : new Date(c.t).toLocaleDateString("zh-CN"),
     close: c.c,
   }));
@@ -64,7 +86,10 @@ function SymbolChartPage() {
   return (
     <AppShell>
       <div className="space-y-4">
-        <Link to="/markets" className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
+        <Link
+          to="/markets"
+          className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+        >
           <ArrowLeft className="size-3.5" /> 返回指数看板
         </Link>
 
@@ -73,10 +98,13 @@ function SymbolChartPage() {
             <div>
               <CardTitle className="text-lg">{label}</CardTitle>
               <CardDescription className="tabular text-xs">
-                {raw} · {chart.data?.currency ?? ""} · 数据来源 Yahoo Finance（延迟）
+                {raw} · {chart.data?.currency ?? ""} · 数据来源{" "}
+                {chart.data?.source ?? "多源免费行情"}（延迟）
               </CardDescription>
               <div className="mt-2 flex items-baseline gap-3">
-                <span className="tabular text-2xl font-semibold">{fmtNum(chart.data?.price ?? null)}</span>
+                <span className="tabular text-2xl font-semibold">
+                  {fmtNum(chart.data?.price ?? null)}
+                </span>
                 <span className={`tabular text-sm ${toneClass(change)}`}>
                   区间 {fmtPct(change)}
                 </span>
@@ -106,24 +134,44 @@ function SymbolChartPage() {
             ) : (
               <div className="h-[360px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                  <AreaChart
+                    data={data}
+                    margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
+                  >
                     <defs>
                       <linearGradient id="fill" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="var(--color-primary)" stopOpacity={0.35} />
-                        <stop offset="100%" stopColor="var(--color-primary)" stopOpacity={0} />
+                        <stop
+                          offset="0%"
+                          stopColor="var(--color-primary)"
+                          stopOpacity={0.35}
+                        />
+                        <stop
+                          offset="100%"
+                          stopColor="var(--color-primary)"
+                          stopOpacity={0}
+                        />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid stroke="var(--color-border)" vertical={false} />
+                    <CartesianGrid
+                      stroke="var(--color-border)"
+                      vertical={false}
+                    />
                     <XAxis
                       dataKey="label"
-                      tick={{ fontSize: 10, fill: "var(--color-muted-foreground)" }}
+                      tick={{
+                        fontSize: 10,
+                        fill: "var(--color-muted-foreground)",
+                      }}
                       minTickGap={40}
                       tickLine={false}
                       axisLine={false}
                     />
                     <YAxis
                       domain={["auto", "auto"]}
-                      tick={{ fontSize: 10, fill: "var(--color-muted-foreground)" }}
+                      tick={{
+                        fontSize: 10,
+                        fill: "var(--color-muted-foreground)",
+                      }}
                       tickLine={false}
                       axisLine={false}
                       width={60}

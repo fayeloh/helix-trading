@@ -8,7 +8,13 @@ import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -77,7 +83,8 @@ function AccountsPage() {
         <div>
           <h1 className="text-xl font-semibold">账户与持仓</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            单账户内可同时持有美股 / 港股 / 加密货币，市值统一折算为账户基准货币。
+            单账户内可同时持有美股 / 港股 /
+            加密货币，市值统一折算为账户基准货币。
           </p>
         </div>
         <AccountsSection />
@@ -89,7 +96,8 @@ function AccountsPage() {
 
 function AccountsSection() {
   const { user } = useAuth();
-  const { accounts, activeAccountId, setActiveAccountId, refetch } = useAccounts();
+  const { accounts, activeAccountId, setActiveAccountId, refetch } =
+    useAccounts();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [broker, setBroker] = useState("");
@@ -100,7 +108,13 @@ function AccountsSection() {
     mutationFn: async () => {
       const { data, error } = await supabase
         .from("accounts")
-        .insert({ user_id: user!.id, name, broker: broker || null, base_currency: currency, notes: notes || null })
+        .insert({
+          user_id: user!.id,
+          name,
+          broker: broker || null,
+          base_currency: currency,
+          notes: notes || null,
+        })
         .select()
         .single();
       if (error) throw error;
@@ -134,7 +148,9 @@ function AccountsSection() {
       <CardHeader className="flex-row items-center justify-between space-y-0">
         <div>
           <CardTitle className="text-base">账户列表</CardTitle>
-          <CardDescription className="text-xs">切换账户后，简报与总览会跟随当前账户</CardDescription>
+          <CardDescription className="text-xs">
+            切换账户后，简报与总览会跟随当前账户
+          </CardDescription>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
@@ -153,12 +169,20 @@ function AccountsSection() {
             <div className="space-y-3">
               <div className="space-y-1.5">
                 <Label className="text-xs">账户名称</Label>
-                <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="主账户 / 长线仓" />
+                <Input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="主账户 / 长线仓"
+                />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <Label className="text-xs">券商 / 平台</Label>
-                  <Input value={broker} onChange={(e) => setBroker(e.target.value)} placeholder="IBKR / 富途 / Binance" />
+                  <Input
+                    value={broker}
+                    onChange={(e) => setBroker(e.target.value)}
+                    placeholder="IBKR / 富途 / Binance"
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs">基准货币</Label>
@@ -178,9 +202,17 @@ function AccountsSection() {
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">备注（策略定位、行业偏好）</Label>
-                <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} />
+                <Textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  rows={2}
+                />
               </div>
-              <Button className="w-full" disabled={!name || create.isPending} onClick={() => create.mutate()}>
+              <Button
+                className="w-full"
+                disabled={!name || create.isPending}
+                onClick={() => create.mutate()}
+              >
                 创建
               </Button>
             </div>
@@ -189,7 +221,9 @@ function AccountsSection() {
       </CardHeader>
       <CardContent>
         {accounts.length === 0 ? (
-          <p className="text-sm text-muted-foreground">还没有账户，先创建一个吧。</p>
+          <p className="text-sm text-muted-foreground">
+            还没有账户，先创建一个吧。
+          </p>
         ) : (
           <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
             {accounts.map((a) => (
@@ -208,16 +242,21 @@ function AccountsSection() {
                     {a.base_currency}
                   </Badge>
                 </div>
-                <p className="mt-1 text-xs text-muted-foreground">{a.broker || "未填写券商"}</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {a.broker || "未填写券商"}
+                </p>
                 {a.notes ? (
-                  <p className="mt-1 line-clamp-2 text-[11px] text-muted-foreground">{a.notes}</p>
+                  <p className="mt-1 line-clamp-2 text-[11px] text-muted-foreground">
+                    {a.notes}
+                  </p>
                 ) : null}
                 <span
                   role="button"
                   tabIndex={0}
                   onClick={(e) => {
                     e.stopPropagation();
-                    if (confirm(`删除账户「${a.name}」及其持仓记录？`)) remove.mutate(a.id);
+                    if (confirm(`删除账户「${a.name}」及其持仓记录？`))
+                      remove.mutate(a.id);
                   }}
                   onKeyDown={(e) => e.stopPropagation()}
                   className="mt-2 inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-bear"
@@ -256,17 +295,30 @@ function HoldingsSection() {
   const holdings = holdingsQuery.data ?? [];
 
   const quotesQuery = useQuery({
-    queryKey: ["quotes", holdings.map((h) => `${h.symbol}:${h.market}`).sort().join(",")],
+    queryKey: [
+      "quotes",
+      holdings
+        .map((h) => `${h.symbol}:${h.market}`)
+        .sort()
+        .join(","),
+    ],
     enabled: holdings.length > 0,
     staleTime: 5 * 60 * 1000,
     queryFn: async () =>
       await quotesFn({
-        data: { items: holdings.map((h) => ({ symbol: h.symbol, market: h.market })) },
+        data: {
+          items: holdings.map((h) => ({ symbol: h.symbol, market: h.market })),
+        },
       }),
   });
 
   const summary = useMemo(
-    () => buildPortfolio(holdings, quotesQuery.data ?? {}, activeAccount?.base_currency ?? "USD"),
+    () =>
+      buildPortfolio(
+        holdings,
+        quotesQuery.data ?? {},
+        activeAccount?.base_currency ?? "USD",
+      ),
     [holdings, quotesQuery.data, activeAccount?.base_currency],
   );
 
@@ -299,7 +351,8 @@ function HoldingsSection() {
       const { error } = await supabase.from("holdings").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["holdings", activeAccountId] }),
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: ["holdings", activeAccountId] }),
   });
 
   const importCsv = async (file: File) => {
@@ -332,7 +385,9 @@ function HoldingsSection() {
   };
 
   const downloadTemplate = () => {
-    const blob = new Blob(["\uFEFF" + CSV_TEMPLATE], { type: "text/csv;charset=utf-8" });
+    const blob = new Blob(["\uFEFF" + CSV_TEMPLATE], {
+      type: "text/csv;charset=utf-8",
+    });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -361,12 +416,17 @@ function HoldingsSection() {
           value={fmtMoney(summary.totalPnl, base)}
           tone={summary.totalPnl}
         />
-        <StatCard label="盈亏比例" value={fmtPct(summary.totalPnlPct)} tone={summary.totalPnlPct} />
+        <StatCard
+          label="盈亏比例"
+          value={fmtPct(summary.totalPnlPct)}
+          tone={summary.totalPnlPct}
+        />
       </div>
 
       {summary.unpriced > 0 ? (
         <p className="text-xs text-warn">
-          {summary.unpriced} 个标的行情不可用（代码可能有误或数据源不覆盖），其市值按 0 计入。
+          {summary.unpriced}{" "}
+          个标的行情不可用（代码可能有误或数据源不覆盖），其市值按 0 计入。
         </p>
       ) : null}
 
@@ -375,7 +435,7 @@ function HoldingsSection() {
           <div>
             <CardTitle className="text-base">持仓明细</CardTitle>
             <CardDescription className="text-xs">
-              行情来源 Yahoo Finance（延迟数据），汇率为静态默认值
+              行情来自多源免费数据（延迟），汇率为静态默认值
             </CardDescription>
           </div>
           <div className="flex gap-2">
@@ -383,7 +443,11 @@ function HoldingsSection() {
               <Download className="mr-1 size-3.5" />
               CSV 模板
             </Button>
-            <Button size="sm" variant="outline" onClick={() => fileRef.current?.click()}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => fileRef.current?.click()}
+            >
               <Upload className="mr-1 size-3.5" />
               导入 CSV
             </Button>
@@ -434,22 +498,35 @@ function HoldingsSection() {
                         </div>
                       </TableCell>
                       <TableCell className="text-xs text-muted-foreground">
-                        {MARKETS.find((m) => m.value === r.market)?.label ?? r.market}
+                        {MARKETS.find((m) => m.value === r.market)?.label ??
+                          r.market}
                       </TableCell>
-                      <TableCell className="tabular text-right">{fmtNum(r.quantity, 4)}</TableCell>
-                      <TableCell className="tabular text-right">{fmtNum(r.avg_cost)}</TableCell>
-                      <TableCell className="tabular text-right">{fmtNum(r.price)}</TableCell>
-                      <TableCell className={`tabular text-right ${toneClass(r.changePct)}`}>
+                      <TableCell className="tabular text-right">
+                        {fmtNum(r.quantity, 4)}
+                      </TableCell>
+                      <TableCell className="tabular text-right">
+                        {fmtNum(r.avg_cost)}
+                      </TableCell>
+                      <TableCell className="tabular text-right">
+                        {fmtNum(r.price)}
+                      </TableCell>
+                      <TableCell
+                        className={`tabular text-right ${toneClass(r.changePct)}`}
+                      >
                         {fmtPct(r.changePct)}
                       </TableCell>
                       <TableCell className="tabular text-right">
                         {fmtMoney(r.marketValue, base)}
                       </TableCell>
-                      <TableCell className={`tabular text-right ${toneClass(r.pnl)}`}>
+                      <TableCell
+                        className={`tabular text-right ${toneClass(r.pnl)}`}
+                      >
                         {fmtMoney(r.pnl, base)}
                         <div className="text-[11px]">{fmtPct(r.pnlPct)}</div>
                       </TableCell>
-                      <TableCell className="tabular text-right">{fmtPct(r.weightPct, 1)}</TableCell>
+                      <TableCell className="tabular text-right">
+                        {fmtPct(r.weightPct, 1)}
+                      </TableCell>
                       <TableCell className="text-xs text-muted-foreground">
                         {r.sector || "未标注"}
                       </TableCell>
@@ -474,20 +551,38 @@ function HoldingsSection() {
 
       {holdings.length > 0 ? (
         <div className="grid gap-4 md:grid-cols-2">
-          <DistributionCard title="板块分布" items={summary.sectors} base={base} />
-          <DistributionCard title="市场分布" items={summary.markets} base={base} />
+          <DistributionCard
+            title="板块分布"
+            items={summary.sectors}
+            base={base}
+          />
+          <DistributionCard
+            title="市场分布"
+            items={summary.markets}
+            base={base}
+          />
         </div>
       ) : null}
     </div>
   );
 }
 
-function StatCard({ label, value, tone }: { label: string; value: string; tone?: number }) {
+function StatCard({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone?: number;
+}) {
   return (
     <Card>
       <CardContent className="p-4">
         <p className="text-xs text-muted-foreground">{label}</p>
-        <p className={`tabular mt-1 text-lg font-semibold ${tone != null ? toneClass(tone) : ""}`}>
+        <p
+          className={`tabular mt-1 text-lg font-semibold ${tone != null ? toneClass(tone) : ""}`}
+        >
           {value}
         </p>
       </CardContent>
@@ -519,7 +614,10 @@ function DistributionCard({
               </span>
             </div>
             <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-muted">
-              <div className="h-full rounded-full bg-primary" style={{ width: `${s.pct}%` }} />
+              <div
+                className="h-full rounded-full bg-primary"
+                style={{ width: `${s.pct}%` }}
+              />
             </div>
           </div>
         ))}
@@ -528,7 +626,11 @@ function DistributionCard({
   );
 }
 
-function AddHoldingDialog({ onSubmit }: { onSubmit: (row: Partial<Holding>) => void }) {
+function AddHoldingDialog({
+  onSubmit,
+}: {
+  onSubmit: (row: Partial<Holding>) => void;
+}) {
   const [open, setOpen] = useState(false);
   const [symbol, setSymbol] = useState("");
   const [name, setName] = useState("");
@@ -556,11 +658,19 @@ function AddHoldingDialog({ onSubmit }: { onSubmit: (row: Partial<Holding>) => v
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
             <Label className="text-xs">代码</Label>
-            <Input value={symbol} onChange={(e) => setSymbol(e.target.value)} placeholder="AAPL" />
+            <Input
+              value={symbol}
+              onChange={(e) => setSymbol(e.target.value)}
+              placeholder="AAPL"
+            />
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs">名称</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Apple" />
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Apple"
+            />
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs">市场</Label>
@@ -568,7 +678,9 @@ function AddHoldingDialog({ onSubmit }: { onSubmit: (row: Partial<Holding>) => v
               value={market}
               onValueChange={(v) => {
                 setMarket(v);
-                setCurrency(MARKETS.find((m) => m.value === v)?.currency ?? "USD");
+                setCurrency(
+                  MARKETS.find((m) => m.value === v)?.currency ?? "USD",
+                );
               }}
             >
               <SelectTrigger>
@@ -618,7 +730,11 @@ function AddHoldingDialog({ onSubmit }: { onSubmit: (row: Partial<Holding>) => v
           </div>
           <div className="col-span-2 space-y-1.5">
             <Label className="text-xs">板块 / 行业标签</Label>
-            <Input value={sector} onChange={(e) => setSector(e.target.value)} placeholder="信息技术" />
+            <Input
+              value={sector}
+              onChange={(e) => setSector(e.target.value)}
+              placeholder="信息技术"
+            />
           </div>
         </div>
         <Button

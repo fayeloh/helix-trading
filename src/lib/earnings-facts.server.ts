@@ -10,6 +10,9 @@ export type EarningsFact = {
   eps_actual: number | null;
   eps_estimate: number | null;
   currency: string | null;
+  revenue_yoy_pct?: number | null;
+  net_income_yoy_pct?: number | null;
+  revenue_surprise_pct?: number | null;
 };
 
 /** Nasdaq 公开的 EPS 实际 / 一致预期表（免密钥）。 */
@@ -106,17 +109,32 @@ export async function getUsEarningsFacts(ticker: string, limit = 3): Promise<Ear
     return best?.val ?? null;
   };
 
-  const facts: EarningsFact[] = past.map(({ r, reported, end }) => ({
+  const yoy = (list: { end: string; val: number }[], end: string | null, value: number | null) => {
+    if (!end || value == null) return null;
+    const prior = list.find((f) => {
+      const diff = Math.abs(new Date(f.end).getTime() - new Date(end).getTime());
+      return diff > 330 * 86_400_000 && diff < 430 * 86_400_000;
+    });
+    return prior?.val ? ((value - prior.val) / Math.abs(prior.val)) * 100 : null;
+  };
+  const facts: EarningsFact[] = past.map(({ r, reported, end }) => {
+    const revenueActual = near(revenue, end);
+    const netIncomeActual = near(netIncome, end);
+    return ({
     period: r.fiscalQtrEnd ?? reported ?? null,
     report_date: reported,
     timing: "unknown",
-    revenue_actual: near(revenue, end),
+    revenue_actual: revenueActual,
     revenue_estimate: null,
-    net_income_actual: near(netIncome, end),
+    net_income_actual: netIncomeActual,
     eps_actual: num(r.eps),
     eps_estimate: num(r.consensusForecast),
     currency: revenue.length > 0 ? "USD" : null,
-  }));
+    revenue_yoy_pct: yoy(revenue, end, revenueActual),
+    net_income_yoy_pct: yoy(netIncome, end, netIncomeActual),
+    revenue_surprise_pct: null,
+  });
+  });
 
   if (facts.length > 0) {
     try {
