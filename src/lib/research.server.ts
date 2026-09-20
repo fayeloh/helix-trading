@@ -513,7 +513,9 @@ export async function generateResearchSection(input: {
   const ysym = resolved.symbol || yahooSymbol(input.symbol, input.market);
   if (!resolved.verified) {
     throw new Error(
-      `暂时无法从公开行情或监管资料确认代码 ${ysym}。请检查代码与市场，或稍后重试。`,
+      resolved.failureReason === "not_found"
+        ? `未能在公开行情或监管资料中找到代码 ${ysym}。请确认代码拼写、市场选择和交易所后缀（例如港股使用 0700.HK），再重试。`
+        : `暂时无法从公开行情或监管资料确认代码 ${ysym}。数据源可能暂时不可用，请稍后重试。`,
     );
   }
   let priceContext = "行情数据不可用";

@@ -123,6 +123,7 @@ function MarketsPage() {
             label: r.label,
             price: r.price,
             changePct: r.days.at(-1)?.changePct ?? null,
+            history: r.days.map((d) => d.close),
           }))}
         />
 

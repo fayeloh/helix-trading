@@ -5,6 +5,7 @@ type GlobeRow = {
   label: string;
   price: number | null;
   changePct: number | null;
+  history?: number[];
 };
 const LOCATIONS = [
   ["^GSPC", 40.71, -74.01],
@@ -175,10 +176,100 @@ const CONTINENTS: readonly Continent[] = [
     ],
   },
 ];
+
+const pointInContinent = (
+  lat: number,
+  lon: number,
+  points: readonly GeoPoint[],
+) => {
+  let inside = false;
+  for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
+    const [yi, xi] = points[i]!;
+    const [yj, xj] = points[j]!;
+    if (
+      yi > lat !== yj > lat &&
+      lon < ((xj - xi) * (lat - yi)) / (yj - yi || Number.EPSILON) + xi
+    ) {
+      inside = !inside;
+    }
+  }
+  return inside;
+};
+
+// A deterministic point cloud gives the globe the same illuminated-data-mesh
+// look as the reference video without shipping a large texture or map runtime.
+const LAND_DOTS = CONTINENTS.flatMap((continent, continentIndex) => {
+  const dots: { lat: number; lon: number; seed: number }[] = [];
+  for (let lat = -84; lat <= 78; lat += 2.25) {
+    for (let lon = -177; lon <= 177; lon += 2.7) {
+      const seed = Math.abs(
+        Math.sin(lat * 12.9898 + lon * 78.233 + continentIndex * 17.17),
+      );
+      const jitterLat = (seed - 0.5) * 1.35;
+      const jitterLon = (Math.abs(Math.sin(seed * 43758.5453)) - 0.5) * 1.6;
+      if (
+        pointInContinent(lat + jitterLat, lon + jitterLon, continent.points)
+      ) {
+        dots.push({ lat: lat + jitterLat, lon: lon + jitterLon, seed });
+      }
+    }
+  }
+  return dots;
+});
+
 const fmt = (v: number | null) =>
   v == null
     ? "—"
     : v.toLocaleString("en-US", { maximumFractionDigits: v >= 10000 ? 0 : 2 });
+
+function MiniSparkline({ values, positive }: { values: number[]; positive: boolean }) {
+  if (values.length < 2) return null;
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const span = Math.max(max - min, 0.0001);
+  const points = values
+    .map((value, index) => {
+      const x = (index / (values.length - 1)) * 100;
+      const y = 28 - ((value - min) / span) * 24;
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    })
+    .join(" ");
+  const color = positive ? "#33f39a" : "#ff5966";
+  return (
+    <svg viewBox="0 0 100 30" className="mt-1 h-7 w-full" preserveAspectRatio="none" aria-hidden="true">
+      <polyline points={points} fill="none" stroke={color} strokeWidth="1.8" vectorEffect="non-scaling-stroke" />
+      <circle cx={points.split(" ").at(-1)?.split(",")[0]} cy={points.split(" ").at(-1)?.split(",")[1]} r="1.8" fill={color} />
+    </svg>
+  );
+}
+
+const STARS = Array.from({ length: 180 }, (_, i) => ({
+  x: ((i * 73) % 997) / 997,
+  y: ((i * 151 + 31) % 991) / 991,
+  r: 0.35 + ((i * 17) % 10) / 18,
+  a: 0.18 + ((i * 29) % 7) / 16,
+}));
+const HUBS: readonly [number, number][] = [
+  [40.71, -74],
+  [51.51, -0.13],
+  [50.11, 8.68],
+  [35.68, 139.69],
+  [31.23, 121.47],
+  [22.32, 114.17],
+  [1.35, 103.82],
+  [-33.87, 151.21],
+];
+const HUB_LINKS: readonly [number, number][] = [
+  [0, 1],
+  [1, 3],
+  [3, 4],
+  [4, 5],
+  [5, 6],
+  [6, 7],
+  [1, 2],
+  [0, 4],
+  [2, 6],
+];
 
 function RotatingGlobe({ rows }: { rows: GlobeRow[] }) {
   const canvasRef = useRef<HTMLCanvasElement>(null),
@@ -193,7 +284,13 @@ function RotatingGlobe({ rows }: { rows: GlobeRow[] }) {
     if (!ctx) return;
     let frame = 0,
       rotation = -2.1,
-      last = performance.now();
+      last = performance.now(),
+      autoRotate = true,
+      dragging = false,
+      dragX = 0,
+      pointerInside = false,
+      resumeTimer: ReturnType<typeof setTimeout> | undefined;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     const resize = () => {
       const d = Math.min(devicePixelRatio || 1, 2),
         b = wrap.getBoundingClientRect();
@@ -222,14 +319,25 @@ function RotatingGlobe({ rows }: { rows: GlobeRow[] }) {
       };
     };
     const draw = (now: number) => {
-      rotation += Math.min(40, now - last) * 0.000055;
+      if (autoRotate && !reducedMotion.matches) {
+        rotation += Math.min(40, now - last) * 0.000055;
+      }
       last = now;
       const w = wrap.clientWidth,
         h = wrap.clientHeight,
         cx = w * 0.5,
-        cy = h * 0.52,
-        r = Math.min(w * 0.39, h * 0.43);
+        cy = h * 0.51,
+        r = Math.min(w * 0.435, h * 0.46);
       ctx.clearRect(0, 0, w, h);
+      for (const star of STARS) {
+        const shimmer = reducedMotion.matches
+          ? 0.7
+          : 0.58 + Math.sin(now * 0.0008 + star.x * 19) * 0.16;
+        ctx.fillStyle = `rgba(99,157,169,${star.a * shimmer})`;
+        ctx.beginPath();
+        ctx.arc(star.x * w, star.y * h, star.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
       const g = ctx.createRadialGradient(
         cx - r * 0.2,
         cy - r * 0.25,
@@ -238,13 +346,44 @@ function RotatingGlobe({ rows }: { rows: GlobeRow[] }) {
         cy,
         r * 1.2,
       );
-      g.addColorStop(0, "rgba(31,101,112,.5)");
-      g.addColorStop(0.62, "rgba(5,28,38,.9)");
+      g.addColorStop(0, "rgba(17,58,67,.36)");
+      g.addColorStop(0.62, "rgba(4,20,27,.84)");
       g.addColorStop(1, "rgba(2,10,17,0)");
       ctx.fillStyle = g;
       ctx.beginPath();
       ctx.arc(cx, cy, r * 1.14, 0, Math.PI * 2);
       ctx.fill();
+      const atmosphere = ctx.createRadialGradient(
+        cx,
+        cy,
+        r * 0.82,
+        cx,
+        cy,
+        r * 1.12,
+      );
+      atmosphere.addColorStop(0, "rgba(29,255,151,0)");
+      atmosphere.addColorStop(0.72, "rgba(29,255,151,.025)");
+      atmosphere.addColorStop(0.9, "rgba(64,255,182,.23)");
+      atmosphere.addColorStop(0.94, "rgba(70,236,188,.08)");
+      atmosphere.addColorStop(1, "rgba(54,213,193,0)");
+      ctx.fillStyle = atmosphere;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r * 1.12, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.save();
+      ctx.setLineDash([2, 7]);
+      ctx.lineDashOffset = reducedMotion.matches ? 0 : -now * 0.008;
+      ctx.strokeStyle = "rgba(57,255,136,.15)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy + r * 0.04, r * 1.28, r * 0.25, -0.16, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.strokeStyle = "rgba(63,216,255,.08)";
+      ctx.beginPath();
+      ctx.ellipse(cx, cy + r * 0.04, r * 1.42, r * 0.3, -0.16, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
       ctx.save();
       ctx.beginPath();
       ctx.arc(cx, cy, r, 0, Math.PI * 2);
@@ -263,7 +402,7 @@ function RotatingGlobe({ rows }: { rows: GlobeRow[] }) {
             s = true;
           } else ctx.lineTo(p.x, p.y);
         }
-        ctx.strokeStyle = "rgba(39,142,143,.14)";
+        ctx.strokeStyle = "rgba(39,142,143,.055)";
         ctx.lineWidth = 0.65;
         ctx.stroke();
       }
@@ -281,43 +420,85 @@ function RotatingGlobe({ rows }: { rows: GlobeRow[] }) {
             s = true;
           } else ctx.lineTo(p.x, p.y);
         }
-        ctx.strokeStyle = "rgba(39,142,143,.11)";
+        ctx.strokeStyle = "rgba(39,142,143,.045)";
         ctx.stroke();
       }
-      for (const continent of CONTINENTS) {
+      for (const dot of LAND_DOTS) {
+        const p = project(dot.lat, dot.lon, cx, cy, r * 0.995);
+        if (p.z < 0.015) continue;
+        const edgeGlow = Math.pow(1 - p.z, 2.4);
+        const twinkle = reducedMotion.matches
+          ? 0.8
+          : 0.72 + Math.sin(now * 0.0018 + dot.seed * 35) * 0.18;
+        const alpha = Math.min(
+          0.92,
+          (0.16 + p.z * 0.36 + edgeGlow * 0.38) * twinkle,
+        );
+        const radius = 0.42 + edgeGlow * 0.72 + dot.seed * 0.22;
+        ctx.fillStyle = `rgba(91,255,183,${alpha})`;
         ctx.beginPath();
-        let visible = false;
-        let segments = 0;
-        for (const [lat, lon] of continent.points) {
-          const p = project(lat, lon, cx, cy, r);
-          if (p.z < 0) {
-            visible = false;
-            continue;
+        ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      // Keep continent boundaries legible above the point cloud.
+      for (const continent of CONTINENTS) {
+        const drawBoundary = (strokeStyle: string, lineWidth: number) => {
+          ctx.beginPath();
+          let drawing = false;
+          for (let i = 0; i <= continent.points.length; i++) {
+            const [latA, lonA] = continent.points[i % continent.points.length]!;
+            const [latB, lonB] =
+              continent.points[(i + 1) % continent.points.length]!;
+            const steps = Math.max(
+              1,
+              Math.ceil(Math.hypot(latB - latA, lonB - lonA) / 5),
+            );
+            for (let step = 0; step <= steps; step++) {
+              const t = step / steps;
+              const p = project(
+                latA + (latB - latA) * t,
+                lonA + (lonB - lonA) * t,
+                cx,
+                cy,
+                r * 1.002,
+              );
+              if (p.z < 0.02) {
+                drawing = false;
+                continue;
+              }
+              if (!drawing) {
+                ctx.moveTo(p.x, p.y);
+                drawing = true;
+              } else ctx.lineTo(p.x, p.y);
+            }
           }
-          if (!visible) {
-            ctx.moveTo(p.x, p.y);
-            visible = true;
-            segments++;
-          } else ctx.lineTo(p.x, p.y);
-        }
-        if (segments) {
-          ctx.closePath();
-          ctx.fillStyle = "rgba(45,178,132,.30)";
-          ctx.strokeStyle = "rgba(93,245,178,.72)";
-          ctx.lineWidth = 1.1;
-          ctx.fill();
+          ctx.strokeStyle = strokeStyle;
+          ctx.lineWidth = lineWidth;
           ctx.stroke();
-        }
-        const lp = project(continent.label[0], continent.label[1], cx, cy, r);
-        if (lp.z > 0.28) {
-          ctx.font = "600 9px ui-monospace, monospace";
-          ctx.textAlign = "center";
-          ctx.textBaseline = "middle";
-          ctx.fillStyle = `rgba(180,255,220,${0.38 + lp.z * 0.45})`;
-          ctx.fillText(continent.name, lp.x, lp.y);
-        }
+        };
+        drawBoundary("rgba(77,255,181,.16)", 3.4);
+        drawBoundary("rgba(134,255,207,.78)", 1.05);
       }
       ctx.restore();
+      // Financial hub arcs sit above the globe surface and fade on the far side.
+      for (const [a, b] of HUB_LINKS) {
+        const va = project(HUBS[a]![0], HUBS[a]![1], cx, cy, r * 1.01);
+        const vb = project(HUBS[b]![0], HUBS[b]![1], cx, cy, r * 1.01);
+        if (va.z < 0 || vb.z < 0) continue;
+        const mx = (va.x + vb.x) / 2;
+        const my =
+          (va.y + vb.y) / 2 -
+          r * (0.12 + (Math.hypot(va.x - vb.x, va.y - vb.y) / r) * 0.06);
+        ctx.beginPath();
+        ctx.moveTo(va.x, va.y);
+        ctx.quadraticCurveTo(mx, my, vb.x, vb.y);
+        const flow = reducedMotion.matches
+          ? 0.45
+          : 0.38 + Math.sin(now * 0.002 + a) * 0.14;
+        ctx.strokeStyle = `rgba(63,216,255,${flow})`;
+        ctx.lineWidth = 0.8;
+        ctx.stroke();
+      }
       ctx.strokeStyle = "rgba(58,230,181,.24)";
       ctx.beginPath();
       ctx.ellipse(cx, cy + r * 0.04, r * 1.13, r * 0.22, -0.16, 0, Math.PI * 2);
@@ -333,7 +514,7 @@ function RotatingGlobe({ rows }: { rows: GlobeRow[] }) {
         const up = hasChange && row.changePct! >= 0;
         const color = !hasChange ? "#718692" : up ? "#33f39a" : "#ff5966";
         ctx.shadowColor = color;
-        ctx.shadowBlur = hasChange ? 12 : 0;
+        ctx.shadowBlur = hasChange ? 18 : 0;
         ctx.fillStyle = color;
         ctx.beginPath();
         ctx.arc(p.x, p.y, 3.5, 0, Math.PI * 2);
@@ -354,21 +535,97 @@ function RotatingGlobe({ rows }: { rows: GlobeRow[] }) {
         ctx.strokeRect(lx, p.y - 13, tw, 20);
         ctx.fillStyle = color;
         ctx.fillText(label, lx + 6, p.y + 1);
+        if (hasChange) {
+          const wave = reducedMotion.matches
+            ? 0.5
+            : 0.5 + 0.5 * Math.sin(now * 0.004 + lat);
+          for (let ring = 0; ring < 2; ring++) {
+            const pulse = 1 + ring * 0.7 + wave * 0.85;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 5.5 * pulse, 0, Math.PI * 2);
+            ctx.strokeStyle = up
+              ? `rgba(51,243,154,${0.34 - ring * 0.1})`
+              : `rgba(255,89,102,${0.34 - ring * 0.1})`;
+            ctx.lineWidth = 0.8;
+            ctx.stroke();
+          }
+        }
+      }
+      if (!reducedMotion.matches) {
+        const scanX = cx - r + ((now * 0.035) % (r * 2));
+        const scan = ctx.createLinearGradient(scanX - 18, 0, scanX + 18, 0);
+        scan.addColorStop(0, "rgba(75,255,187,0)");
+        scan.addColorStop(0.5, "rgba(75,255,187,.038)");
+        scan.addColorStop(1, "rgba(75,255,187,0)");
+        ctx.fillStyle = scan;
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.clip();
+        ctx.fillRect(scanX - 18, cy - r, 36, r * 2);
+        ctx.restore();
       }
       frame = requestAnimationFrame(draw);
     };
+    const onPointerDown = (event: PointerEvent) => {
+      dragging = true;
+      autoRotate = false;
+      dragX = event.clientX;
+      canvas.setPointerCapture(event.pointerId);
+      canvas.style.cursor = "grabbing";
+      if (resumeTimer) clearTimeout(resumeTimer);
+    };
+    const onPointerMove = (event: PointerEvent) => {
+      if (!dragging) return;
+      rotation += (event.clientX - dragX) * 0.006;
+      dragX = event.clientX;
+    };
+    const onPointerUp = () => {
+      dragging = false;
+      canvas.style.cursor = pointerInside ? "grab" : "default";
+      resumeTimer = setTimeout(() => {
+        autoRotate = true;
+      }, 3500);
+    };
+    const onPointerEnter = () => {
+      pointerInside = true;
+      if (!dragging) canvas.style.cursor = "grab";
+    };
+    const onPointerLeave = () => {
+      pointerInside = false;
+      if (!dragging) canvas.style.cursor = "default";
+    };
+    canvas.addEventListener("pointerdown", onPointerDown);
+    canvas.addEventListener("pointermove", onPointerMove);
+    canvas.addEventListener("pointerup", onPointerUp);
+    canvas.addEventListener("pointercancel", onPointerUp);
+    canvas.addEventListener("pointerenter", onPointerEnter);
+    canvas.addEventListener("pointerleave", onPointerLeave);
     frame = requestAnimationFrame(draw);
     return () => {
       cancelAnimationFrame(frame);
       ro.disconnect();
+      if (resumeTimer) clearTimeout(resumeTimer);
+      canvas.removeEventListener("pointerdown", onPointerDown);
+      canvas.removeEventListener("pointermove", onPointerMove);
+      canvas.removeEventListener("pointerup", onPointerUp);
+      canvas.removeEventListener("pointercancel", onPointerUp);
+      canvas.removeEventListener("pointerenter", onPointerEnter);
+      canvas.removeEventListener("pointerleave", onPointerLeave);
     };
   }, []);
   return (
     <div
       ref={wrapRef}
-      className="relative h-[390px] overflow-hidden rounded-lg border border-[#16313b] bg-[radial-gradient(circle_at_48%_45%,rgba(39,112,117,.16),transparent_55%)]"
+      className="helix-cyber-globe relative h-[390px] touch-none overflow-hidden rounded-lg border border-[#16313b] bg-[radial-gradient(circle_at_48%_45%,rgba(25,85,88,.12),transparent_55%)]"
     >
       <canvas ref={canvasRef} className="absolute inset-0" />
+      <div className="helix-globe-scanline pointer-events-none absolute inset-0" />
+      <div className="helix-globe-vignette pointer-events-none absolute inset-0" />
+      <div className="helix-globe-corner helix-globe-corner-tl" />
+      <div className="helix-globe-corner helix-globe-corner-tr" />
+      <div className="helix-globe-corner helix-globe-corner-bl" />
+      <div className="helix-globe-corner helix-globe-corner-br" />
       <div className="pointer-events-none absolute left-3 top-3 flex gap-3 text-[10px] text-[#7d989e]">
         <span>
           <i className="mr-1 inline-block size-2 rounded-full bg-[#33f39a]" />
@@ -383,8 +640,14 @@ function RotatingGlobe({ rows }: { rows: GlobeRow[] }) {
           暂无数据
         </span>
       </div>
+      <div className="pointer-events-none absolute right-3 top-3 font-mono text-[9px] tracking-[.18em] text-[#39ff88]/70">
+        SYS // INDEX_NET <span className="helix-live-dot">●</span> LIVE
+      </div>
       <div className="pointer-events-none absolute bottom-3 left-3 text-[10px] text-[#6d8991]">
-        全球经纬度定位 · 自动 3D 旋转 · 每 60 秒更新
+        DRAG TO ROTATE · AUTO-PILOT · 60S REFRESH
+      </div>
+      <div className="pointer-events-none absolute bottom-3 right-3 font-mono text-[9px] tracking-[.12em] text-[#3fd8ff]/60">
+        LAT/LNG GRID // HUB LINK ONLINE
       </div>
     </div>
   );
@@ -428,12 +691,12 @@ export function GlobalIndexGlobe({ rows }: { rows: GlobeRow[] }) {
                     {fmt(r.price)}
                   </b>
                 </div>
-                <div
-                  className={`mt-1 text-right text-[10px] ${!hasChange ? "text-[#718692]" : up ? "text-[#33f39a]" : "text-[#ff5966]"}`}
-                >
-                  {!hasChange
-                    ? "暂无数据"
-                    : `${r.changePct! >= 0 ? "+" : ""}${r.changePct!.toFixed(2)}%`}
+                <MiniSparkline values={r.history ?? []} positive={up} />
+                <div className="flex items-center justify-between gap-2 text-[10px]">
+                  <span className="text-[#718692]">5D</span>
+                  <span className={!hasChange ? "text-[#718692]" : up ? "text-[#33f39a]" : "text-[#ff5966]"}>
+                    {!hasChange ? "暂无数据" : `${r.changePct! >= 0 ? "+" : ""}${r.changePct!.toFixed(2)}%`}
+                  </span>
                 </div>
               </div>
             );

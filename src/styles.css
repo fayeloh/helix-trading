@@ -18,6 +18,20 @@
 .helix-globe { transform-style: preserve-3d; background: radial-gradient(circle at 35% 28%, rgba(104,224,211,.35), transparent 14%), radial-gradient(circle at 65% 60%, rgba(30,108,126,.75), rgba(7,17,31,.98) 66%), linear-gradient(110deg, rgba(57,214,197,.65), transparent 26%, rgba(121,169,255,.35) 62%, transparent 85%); animation: helix-globe-spin 22s linear infinite; }
 .helix-globe-grid { opacity: .42; background: repeating-linear-gradient(0deg, transparent 0 19px, rgba(121,169,255,.38) 20px 21px), repeating-linear-gradient(90deg, transparent 0 24px, rgba(57,214,197,.38) 25px 26px); border-radius: 50%; transform: perspective(420px) rotateX(58deg) scaleY(.72); }
 
+.helix-cyber-globe { box-shadow: inset 0 0 58px rgba(57,255,136,.045), 0 0 28px rgba(0,190,255,.08); isolation: isolate; }
+.helix-cyber-globe::before { content: ""; position: absolute; z-index: 1; inset: 0; pointer-events: none; background: linear-gradient(105deg, transparent 18%, rgba(52,255,166,.018) 49%, transparent 72%); animation: helix-globe-sweep 7s ease-in-out infinite; }
+.helix-globe-scanline { z-index: 2; background: repeating-linear-gradient(to bottom, transparent 0 3px, rgba(57,255,136,.028) 3px 4px); mix-blend-mode: screen; }
+.helix-globe-vignette { z-index: 2; background: radial-gradient(ellipse at center, transparent 48%, rgba(2,8,15,.58) 100%); }
+.helix-globe-corner { position: absolute; z-index: 4; width: 18px; height: 18px; border-color: rgba(57,255,136,.72); }
+.helix-globe-corner-tl { left: 8px; top: 8px; border-left: 1px solid; border-top: 1px solid; }
+.helix-globe-corner-tr { right: 8px; top: 8px; border-right: 1px solid; border-top: 1px solid; }
+.helix-globe-corner-bl { left: 8px; bottom: 8px; border-left: 1px solid; border-bottom: 1px solid; }
+.helix-globe-corner-br { right: 8px; bottom: 8px; border-right: 1px solid; border-bottom: 1px solid; }
+.helix-live-dot { display: inline-block; margin: 0 3px; color: #39ff88; animation: helix-live-blink 1.2s steps(2,end) infinite; }
+@keyframes helix-live-blink { 50% { opacity: .25; } }
+@keyframes helix-globe-sweep { 0%,18% { transform: translateX(-45%); opacity: 0; } 45% { opacity: 1; } 75%,100% { transform: translateX(45%); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .helix-cyber-globe::before, .helix-live-dot { animation: none; } }
+
 @custom-variant dark (&:is(.dark *));
 
 /*

@@ -3,6 +3,7 @@ import { readCache, writeCache } from "./market.server";
 import { googleNews, rssFeed, type NewsItem } from "./news.server";
 import { translateTitlesToZh } from "./translate.server";
 import { aiJson, AI_MODEL_FAST, GUARDRAILS } from "./ai.server";
+import { expandBullishSpaceImpact } from "./macro-briefing.space";
 
 import type {
   HeadlineImpact,
@@ -39,9 +40,9 @@ export function etDate(offsetDays = 0, d: Date = new Date()): string {
 }
 
 const BULLISH = [
-  "上涨", "走高", "创新高", "反弹", "超预期", "好于预期", "降息", "增持", "回购", "上调", "扩产", "利好", "大涨", "获批",
+  "上涨", "走高", "创新高", "反弹", "超预期", "好于预期", "降息", "增持", "回购", "上调", "扩产", "利好", "大涨", "获批", "获订单", "中标", "成功发射",
   "rise", "rises", "rally", "jump", "jumps", "surge", "surges", "soar", "gains", "beat", "beats",
-  "record high", "upgrade", "raises outlook", "buyback", "approval", "rate cut",
+  "record high", "upgrade", "raises outlook", "buyback", "approval", "rate cut", "contract award", "wins contract", "wins", "secures contract", "successful launch",
 ];
 const BEARISH = [
   "下跌", "下挫", "跌破", "重挫", "不及预期", "低于预期", "加息", "关税", "制裁", "裁员", "下调", "亏损", "违约", "暴跌", "调查", "罢工",
@@ -62,6 +63,8 @@ export function impactOfTitle(title: string): HeadlineImpact {
 
 
 const SECTOR_HINTS: { keys: string[]; sector: string }[] = [
+  // 太空/航天新闻按产业链整体归类，避免只显示单一公司或火箭标的。
+  { keys: ["太空", "航天", "火箭", "卫星", "space", "aerospace", "rocket", "satellite", "SpaceX", "AST SpaceMobile", "Rocket Lab", "Intuitive Machines", "Redwire", "Planet Labs", "Virgin Galactic"], sector: "太空板块" },
   { keys: ["芯片", "半导体", "英伟达", "台积电", "AMD", "chip", "semiconductor", "nvidia", "tsmc"], sector: "半导体" },
   { keys: ["银行", "券商", "保险", "金融", "bank", "broker", "insurer", "financial"], sector: "金融" },
   { keys: ["原油", "石油", "天然气", "OPEC", "能源", "oil", "crude", "gas", "energy"], sector: "能源" },
@@ -111,31 +114,77 @@ function tickersOfTitle(title: string): string[] {
   return out.slice(0, 4);
 }
 
+type HeadlineAnalysis = {
+  sectors: string[];
+  reasoning: string;
+};
+
+/**
+ * 用可审计的金融传导链补足标题词频判断：事件 → 利率/成本/需求 → 板块。
+ * 只在标题明确命中规则时推演，命中不到时保持保守，不把相关性写成确定性因果。
+ */
+function analyzeHeadline(title: string, impact: HeadlineImpact, initialSectors: string[]): HeadlineAnalysis {
+  const t = title.toLowerCase();
+  const sectors = [...initialSectors];
+  const add = (...values: string[]) => {
+    for (const value of values) if (!sectors.includes(value)) sectors.push(value);
+  };
+  let reasoning = "标题方向明确，但缺少足够信息拆解传导链，先按直接相关板块观察。";
+
+  if (/(降息|减息|rate cut|dovish|lower rates)/i.test(title)) {
+    add("科技与AI", "房地产", "贵金属", "金融");
+    reasoning = "降息压低无风险利率与融资成本，通常利多科技与AI、房地产及贵金属；同时关注银行净息差，金融板块相对承压。";
+  } else if (/(加息|升息|rate hike|hawkish|higher rates)/i.test(title)) {
+    add("金融", "科技与AI", "房地产", "贵金属");
+    reasoning = "加息抬升贴现率与融资成本，通常利多金融的利差预期；高估值科技与AI、房地产及贵金属的估值承压。";
+  } else if (/(油价|原油|wti|布伦特|天然气|oil|crude|energy)/i.test(title) &&
+    /(上涨|走高|大涨|飙升|新高|surge|jump|rally|rise)/i.test(title)) {
+    add("能源", "航空与运输", "消费");
+    reasoning = "能源价格上行改善上游资源品收入，但会推高航空运输与消费企业的燃料/物流成本，形成板块间分化。";
+  } else if (/(油价|原油|wti|布伦特|天然气|oil|crude|energy)/i.test(title) &&
+    /(下跌|下挫|重挫|暴跌|走低|drop|slump|fall|plunge)/i.test(title)) {
+    add("能源", "航空与运输", "消费");
+    reasoning = "能源价格回落压低上游收入预期，但缓解航空运输与消费企业的成本压力，受益方向与能源板块相反。";
+  } else if (/(关税|制裁|出口管制|禁令|tariff|sanction|export control)/i.test(title)) {
+    add("出口链", "消费");
+    reasoning = "关税、制裁或出口管制提高跨境交易摩擦与供应链不确定性，通常利空出口链和可选消费；需进一步确认豁免范围与替代供应。";
+  } else if (/(通胀|cpi|pce|ppi|inflation)/i.test(title)) {
+    add("金融", "科技与AI", "房地产", "贵金属");
+    reasoning = "通胀数据改变利率路径定价：若高于预期，利率敏感的科技与AI、房地产及贵金属承压，金融相对受益；若低于预期则方向反转。";
+  } else if (/(ai|人工智能|算力|云|data center|artificial intelligence)/i.test(title)) {
+    add("科技与AI", "半导体");
+    reasoning = "AI/算力需求变化先影响云计算与数据中心资本开支，再沿订单链传导至半导体；同时观察资本开支是否挤压下游利润。";
+  } else if (impact !== "neutral") {
+    reasoning = `标题包含偏${impact === "bullish" ? "正面" : "负面"}表述，先对直接相关板块形成${impact === "bullish" ? "利多" : "利空"}；持续性取决于后续数据、指引与估值定价。`;
+  }
+
+  return { sectors: sectors.slice(0, 6), reasoning };
+}
+
 function toHeadline(n: NewsItem, zhTitle?: string): TopHeadline | null {
   if (!n.title) return null;
   const display = zhTitle?.trim() || n.title;
   // 方向与板块识别同时基于中英文文本，翻译成功与否都能命中。
   const matchText = `${display} ${n.title}`;
   const impact = impactOfTitle(matchText);
+  const analysis = analyzeHeadline(matchText, impact, sectorsOfTitle(matchText));
   const time = n.publishedAt ? etStamp(new Date(n.publishedAt)) : etStamp();
-  return {
+  return expandBullishSpaceImpact({
     headline: display,
     ...(display !== n.title ? { headline_original: n.title } : {}),
     source: n.source,
     time,
     impact,
-    affected_sectors: sectorsOfTitle(matchText),
+    affected_sectors: analysis.sectors,
     affected_tickers: [...tickersOfTitle(matchText), ...(n.related ?? [])].slice(0, 5),
-    reasoning:
-      impact === "neutral"
-        ? "标题措辞未给出明确方向，需等待后续数据或公司确认。"
-        : `标题包含${impact === "bullish" ? "偏正面" : "偏负面"}表述，短期对上述范围形成${impact === "bullish" ? "利多" : "利空"}压力。`,
+    reasoning: impact === "neutral" ? "标题措辞未给出明确方向，需等待后续数据或公司确认。" : analysis.reasoning,
     ...(n.url ? { url: n.url } : {}),
-  };
+  });
 }
 
 /** 重要性关键词权重：宏观政策与权重股优先（中英文均可命中）。 */
 const IMPORTANCE_WEIGHTS: { test: RegExp; score: number }[] = [
+  { test: /(太空|航天|火箭|卫星|space\b|aerospace\b|rocket\b|satellite\b|orbital\b|spaceflight\b|SpaceX|AST SpaceMobile|Rocket Lab|Intuitive Machines|Redwire|Planet Labs|Virgin Galactic)/i, score: 5 },
   { test: /(美联储|FOMC|议息|加息|降息|鲍威尔|央行|利率决议|federal reserve|\bfed\b|rate (cut|hike|decision)|central bank)/i, score: 6 },
   { test: /(CPI|PCE|PPI|通胀|非农|失业率|GDP|就业|inflation|payroll|jobless|unemployment)/i, score: 5 },
   { test: /(关税|制裁|出口管制|贸易战|地缘|战争|tariff|sanction|export control|trade war|war\b)/i, score: 4 },
@@ -190,7 +239,7 @@ const HEADLINE_FEEDS: { url: string; source: string; limit: number }[] = [
  * 全部源失败时抛错，交由调用方决定是否降级，避免把空结果缓存成「暂不可用」。
  */
 export async function getLiveHeadlines(limit = 5): Promise<TopHeadline[]> {
-  const cacheKey = "macro_headlines_live_v3";
+  const cacheKey = "macro_headlines_live_v4";
   const cached = await readCache<TopHeadline[]>(cacheKey);
   if (cached?.length) return cached;
 

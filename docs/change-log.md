@@ -1,6 +1,90 @@
 # 项目变更记录
 
+### 2026-09-20：增强 3D 地球仪板块分界
+
+- 修改范围：`src/components/GlobalIndexGlobe.tsx`、`docs/change-log.md`。
+- 具体变更点：在大陆点云上方增加按可见面绘制的七大洲轮廓线，采用“宽幅低亮辉光 + 细幅高亮边界”双层描边，并对轮廓边缘做插值采样，提升北美、欧洲、亚洲等板块的可辨识度，同时保持暗色点云地球效果。
+- 验证结果：组件 ESLint、`npm run typecheck` 与 `git diff --check` 通过；沿用本轮点云地球仪已通过的生产构建结果。
+
+### 2026-09-20：区分标的不存在与数据源暂不可用
+
+- 修改范围：`src/lib/symbol-resolver.server.ts`、`src/lib/research.server.ts`、`src/lib/symbol-resolver.test.ts`、`docs/change-log.md`。
+- 具体变更点：研究请求在代码无法从公开行情或 SEC 资料确认时，改为提示“未找到代码”，并引导检查代码、市场和交易所后缀；数据源暂时不可用时保留稍后重试提示。`ResolvedSymbol` 增加可选 `failureReason`，不对未知代码强行生成报告。公开 Nasdaq/FMP 接口核对显示 `DRFT` 当前不是可识别的有效美股代码。
+- 验证结果：定向 ESLint、`npm run typecheck`、symbol-resolver 4 项测试和 `git diff --check` 通过；生产构建此前已通过，本次未改变构建逻辑。
+
 本文件按时间点记录项目中所有文件修改。只要修改项目文件，都必须在变更发生时追加记录。
+
+### 2026-09-19：研究页图表调整为并列 Tab 并更新筛选粒度
+
+- 修改范围：`src/routes/research.tsx`、`src/components/research/ProfessionalChart.tsx`、`src/lib/market-api.server.ts`、`docs/change-log.md`。
+- 具体变更点：将“图表”放到“公司基本面”前方并列的 Tab 中；图表筛选粒度采用专业周期标记 `1H`、`4H`、`1D`、`1W`，同步更新行情服务端周期映射与默认选中周期。
+- 验证结果：`npm run typecheck` 通过；`git diff --check` 通过。
+
+### 2026-09-19：接通图表行情数据并增加短周期回退
+
+- 修改范围：`src/lib/market-api.server.ts`、`src/components/research/ProfessionalChart.tsx`、`docs/change-log.md`。
+- 具体变更点：图表请求短周期行情失败时自动回退到可用日线数据，避免免费行情源不支持 `5m/30m` 时整块空白；无数据时展示服务端错误并提供重试按钮。
+- 验证结果：`npm run typecheck` 通过；`git diff --check` 通过。
+
+### 2026-09-19：按参考图增强指数地球仪信息面板
+
+- 修改范围：`src/components/GlobalIndexGlobe.tsx`、`src/routes/markets.index.tsx`、`docs/change-log.md`。
+- 具体变更点：保留现有点云地球、发光轨道、行情节点和拖拽旋转交互；右侧核心指数面板新增 5 日迷你走势、涨跌颜色与最新变化，整体更接近参考图的暗色霓虹数据终端布局。
+- 验证结果：待执行类型检查与差异格式检查。
+
+### 2026-09-19 22:05 PDT：标的研究增加专业行情图与画线工具
+
+- 修改范围：`src/components/research/ProfessionalChart.tsx`、`src/routes/research.tsx`、`docs/change-log.md`。
+- 具体变更点：在标的研究结果顶部增加当前价格、日涨跌、币种与实际行情来源；新增 1D / 5D / 1M / 3M / 1Y K 线切换、每 60 秒刷新、OHLC 十字光标、MA5/MA20 显隐，以及类似 TradingView 的趋势线、水平线、矩形标注、撤销与清空工具；画线按标的和周期保存在浏览器本地。
+- 验证结果：`npm test -- --run` 通过（93 项）；`npm run build` 通过；新增组件 ESLint 仅有 3 条既有风格类 Hooks 警告，研究页仍保留原有 `any` 规则错误；全量 `npm run typecheck` 仍被既有 `src/lib/symbol-resolver.server.ts:48` 的 `exactOptionalPropertyTypes` 错误阻断。
+
+### 2026-09-19 22:18 PDT：发现并行工作区变更
+
+- 修改范围：`src/lib/research.server.ts`、`src/lib/symbol-resolver.server.ts`、`src/lib/symbol-resolver.test.ts`、`docs/change-log.md`。
+- 具体变更点：在本次图表实现期间再次发现上述文件出现新的未提交修改；不推断其来源，本次未改写这些文件，仅完成状态复核。
+- 验证结果：已通过 `git status --short` 和 `git diff --check` 确认；相关全量 TypeScript 错误已在上一条验证结果中如实记录。
+
+### 2026-09-19 22:04 PDT：发现既有工作区变更
+
+- 修改范围：`src/components/GlobalIndexGlobe.tsx`、`src/components/macro/TopHeadlines.tsx`、`src/lib/macro-briefing.news.server.ts`、`src/lib/macro-briefing.space.ts`、`src/lib/macro-briefing.space.test.ts`、`src/routes/research.tsx`、`src/styles.css`、`docs/change-log.md`。
+- 具体变更点：本次任务开始时发现上述文件已有未提交修改，涉及研究模块批量生成、指数地球仪、宏观头条与太空板块识别等内容；不推断其来源，本次仅在 `research.tsx` 上增量接入行情图，并保留其余既有修改。
+- 验证结果：已通过 `git status --short` 和差异检查确认既有变更范围。
+
+### 2026-09-19：强化头条新闻的金融传导链与利多/利空方向
+
+- 修改范围：`src/lib/macro-briefing.news.server.ts`、`docs/change-log.md`。
+- 具体变更点：在头条分析中加入可审计的“事件 → 利率/成本/需求 → 板块”规则；对降息/加息、油价、关税制裁、通胀和 AI/算力等新闻补充受益与承压板块，并在理由中解释估值、融资成本、净息差、供应链和运营成本的传导逻辑。与现有影响范围解析联动后，头条可明确展示同一新闻的利多板块与利空板块，标题信息不足时仍保持保守判断。
+- 验证结果：`npm run typecheck` 通过；头条影响范围、太空板块与简报增强相关测试 34 项通过；`git diff --check` 通过。
+
+### 2026-09-19 21:28 PDT：细化头条新闻对太空板块的影响
+
+- 修改范围：`src/components/macro/TopHeadlines.tsx`、`src/lib/macro-briefing.news.server.ts`、`src/lib/macro-briefing.space.ts`、`src/lib/macro-briefing.space.test.ts`、`docs/change-log.md`。
+- 具体变更点：新增太空、航天、火箭、卫星及对应英文关键词的板块识别；利多太空类头条明确说明“利多整个太空板块”，展示层同时兼容旧缓存；提高太空新闻的重要性排序权重，并升级头条缓存键以即时应用新分析。
+- 验证结果：`npm run typecheck` 通过；太空板块与执行摘要相关定向测试共 26 项通过；`git diff --check` 通过。新闻服务文件的定向 ESLint 仍受该文件 59 项既有 Prettier 格式问题影响，本次未大范围重排该文件。
+
+### 2026-09-19 21:27 PDT：发现既有工作区变更
+
+- 修改范围：`src/components/GlobalIndexGlobe.tsx`、`src/styles.css`、`docs/change-log.md`。
+- 具体变更点：执行本次任务时发现上述文件已有未提交修改，涉及指数地球仪视觉与相关日志记录；不推断其来源，本次未改写相关组件或样式内容。
+- 验证结果：已通过 `git status --short` 与差异检查确认范围。
+
+### 2026-09-19：按录屏细化指数板块 3D 点云地球仪
+
+- 修改范围：`src/components/GlobalIndexGlobe.tsx`、`src/styles.css`、`docs/change-log.md`。
+- 具体变更点：参照 `/Users/farnlyluo/Desktop/录屏2026-09-20 02.29.28.mov` 将实心大陆改为高密度荧光点云，增加球体边缘大气辉光、流动虚线轨道、微粒明暗波动、扫描光带和双层行情脉冲环；放大球体占比并压低经纬网可见度，使层次与录屏的暗色数据地球更接近；为系统减少动态效果偏好提供静态降级，同时保留拖拽旋转、自动恢复和行情三态语义。
+- 验证结果：`npx eslint src/components/GlobalIndexGlobe.tsx`、`npm run typecheck`、`npm run build` 与 `git diff --check` 通过；本地开发服务已启动并确认页面可加载，当前环境未提供可用的 CUA 浏览器标签页，未完成自动截图复核。
+
+### 2026-09-19：强化指数地球仪的赛博终端视觉
+
+- 修改范围：`src/components/GlobalIndexGlobe.tsx`、`src/styles.css`、`docs/change-log.md`。
+- 具体变更点：增加扫描线、暗角、四角 HUD 准星、LIVE 系统状态、经纬网格状态栏、霓虹边缘和终端式拖拽提示；与现有星空、金融枢纽弧线、点位脉冲和三态涨跌颜色组合成更强的赛博金融终端视觉。
+- 验证结果：待执行 TypeScript 检查、测试和生产构建。
+
+### 2026-09-19：按 3D 地球仪参考规格增强指数看板动效
+
+- 修改范围：`src/components/GlobalIndexGlobe.tsx`、`docs/change-log.md`。
+- 具体变更点：在现有轻量 Canvas 地球仪中补充星空背景、双层赤道 HUD 环、金融枢纽弧线、指数脉冲环和拖拽旋转交互；拖拽后暂停自动旋转，3.5 秒后恢复；继续保留前后遮挡、上涨/下跌/暂无数据三态颜色语义，不引入 Three.js 依赖。
+- 验证结果：待执行 TypeScript 检查、测试和生产构建。
 
 ### 2026-09-19：将研究可靠性能力产品化为可信度面板
 
@@ -9,6 +93,12 @@
 - 验证结果：`npm run typecheck`、`npm test`（9 个常规文件、90 项测试，2 项跳过）、`npm run build` 和 `git diff --check` 通过；`npx eslint src/routes/research.tsx` 仍受该页面既有格式与 `any` 规则积压影响，未将其作为本次功能失败依据。
 
 ## 2026-09-19
+
+### 2026-09-20：改进标的代码确认失败提示
+
+- 修改范围：`src/lib/symbol-resolver.server.ts`、`src/lib/research.server.ts`、`docs/change-log.md`。
+- 具体变更点：解析结果增加 `failureReason`；代码未在公开行情/SEC 目录中找到时，研究页提示“未找到代码”并引导检查代码、市场和交易所后缀；数据源暂时不可用时保留“稍后重试”提示，避免把两类问题混为一谈。对 `DRFT` 的公开接口核对未找到有效美股代码，因此不强行生成报告。
+- 验证结果：待执行类型检查、解析测试和生产构建。
 
 ### 2026-09-20：修复指数看板空值被隐藏的问题
 
@@ -212,3 +302,9 @@
 - `src/lib/market-api.server.ts`：为指数看板增加无有效行情时读取过期缓存的兜底。
 - `src/lib/market.server.ts`：增加过期缓存读取、历史行情持久缓存、Financial Modeling Prep 备用行情源及 Yahoo 请求失败回退逻辑。
 - `src/lib/market-seed.ts`：新增主要指数的离线历史行情种子数据，作为实时行情和缓存均不可用时的安全兜底；该文件在本会话进行状态复核时发现，未由本会话创建。
+
+### 2026-09-20：修复标的研究页多模块空白
+
+- 修改范围：`src/routes/research.tsx`、`docs/change-log.md`。
+- 具体变更点：提交标的后并行请求基本面、财报、周期、资金流四个研究模块；各模块结果独立写入本地状态，切换标签页时无需再次等待；生成中禁用重复操作，并对部分模块失败给出提示。
+- 验证结果：`npm run typecheck` 通过，`git diff --check` 通过；只读核对 Supabase 现有报告确认基本面/财报/资金流已有真实数据，周期模块的空值主要来自事件与月线数据源缺失。

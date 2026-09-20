@@ -8,6 +8,7 @@ import {
   writeCache,
   type Candle,
   type DailyChange,
+  type SeriesResult,
 } from "./market.server";
 
 export type IndexRow = {
@@ -172,23 +173,33 @@ const RANGE_MAP: Record<
   string,
   { range: string; interval: string; ttl: number }
 > = {
-  "1D": { range: "1d", interval: "5m", ttl: 300 },
-  "5D": { range: "5d", interval: "30m", ttl: 600 },
-  "1M": { range: "1mo", interval: "1d", ttl: 1800 },
-  "3M": { range: "3mo", interval: "1d", ttl: 1800 },
-  "1Y": { range: "1y", interval: "1d", ttl: 3600 },
+  "1H": { range: "1d", interval: "5m", ttl: 300 },
+  "4H": { range: "5d", interval: "30m", ttl: 600 },
+  "1D": { range: "1mo", interval: "1d", ttl: 1800 },
+  "1W": { range: "1y", interval: "1d", ttl: 3600 },
 };
 
 export async function getChartData(
   symbol: string,
   rangeKey: string,
 ): Promise<ChartData> {
-  const cfg = RANGE_MAP[rangeKey] ?? RANGE_MAP["1M"]!;
+  const cfg = RANGE_MAP[rangeKey] ?? RANGE_MAP["1D"]!;
   const cacheKey = `chart_v2_${symbol}_${rangeKey}`;
   const cached = await readCache<ChartData>(cacheKey);
   if (cached) return cached;
 
-  const series = await fetchSeries(symbol, cfg.range, cfg.interval);
+  let series: SeriesResult;
+  try {
+    series = await fetchSeries(symbol, cfg.range, cfg.interval);
+  } catch (error) {
+    // Intraday intervals are not supported by every free provider. Fall back
+    // to daily candles so the chart remains useful instead of rendering blank.
+    if (rangeKey === "1H" || rangeKey === "4H") {
+      series = await fetchSeries(symbol, "1mo", "1d");
+    } else {
+      throw error;
+    }
+  }
   const payload: ChartData = {
     symbol,
     currency: series.currency,

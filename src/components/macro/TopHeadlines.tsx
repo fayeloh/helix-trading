@@ -5,6 +5,7 @@ import type { HeadlineImpact, TopHeadline } from "@/lib/macro-briefing.types";
 import { useBriefingPrefs } from "@/lib/briefing-prefs";
 import { MARKET_GROUPS, matchesKeywords } from "@/lib/macro-briefing.markets";
 import { formatImpactScope, resolveImpactScope } from "@/lib/macro-briefing.impact-scope";
+import { expandBullishSpaceImpact } from "@/lib/macro-briefing.space";
 import { symbolLabel } from "@/lib/symbol-names";
 import { formatInZone } from "@/lib/time-format";
 import { useTimezone } from "@/lib/timezone";
@@ -36,7 +37,7 @@ export function TopHeadlines({ data }: { data: TopHeadline[] }) {
     return bySector || byMarket || matchesKeywords(text, prefs.keywords);
   };
 
-  const sorted = [...data].sort(
+  const sorted = data.map(expandBullishSpaceImpact).sort(
     (a, b) =>
       Number(focusedOf(b)) - Number(focusedOf(a)) ||
       RANK[a.impact] - RANK[b.impact] ||
@@ -46,7 +47,7 @@ export function TopHeadlines({ data }: { data: TopHeadline[] }) {
   return (
     <ul className="space-y-3">
       <li className="text-xs leading-relaxed text-muted-foreground">
-        所有发布时间已换算为{shortLabel}（数据源口径为美国东部时间）；利多＝对价格是好消息，利空＝坏消息，中性＝暂无明确方向。
+        所有发布时间已换算为{shortLabel}（数据源口径为美国东部时间）；利多＝对价格是好消息，利空＝坏消息，中性＝暂无明确方向。逻辑判断按“事件 → 利率/成本/需求 → 板块”传导链生成。
       </li>
 
       {sorted.map((h) => {
@@ -129,10 +130,12 @@ export function TopHeadlines({ data }: { data: TopHeadline[] }) {
               </div>
             ) : null}
 
-            <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{h.reasoning}</p>
+            <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+              <span className="font-medium text-foreground/80">逻辑判断：</span> {h.reasoning}
+            </p>
 
             <p className="mt-1 text-xs font-medium leading-relaxed text-foreground/90">
-              {formatImpactScope(resolveImpactScope(h))}
+              <span className="text-muted-foreground">方向拆解：</span> {formatImpactScope(resolveImpactScope(h))}
             </p>
           </li>
         );
