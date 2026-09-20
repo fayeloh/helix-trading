@@ -2,7 +2,37 @@
 
 本文件按时间点记录项目中所有文件修改。只要修改项目文件，都必须在变更发生时追加记录。
 
+### 2026-09-19：将研究可靠性能力产品化为可信度面板
+
+- 修改范围：`src/routes/research.tsx`、`README.md`、`docs/change-log.md`。
+- 具体变更点：在所有研究报告顶部新增“研究可信度”面板，展示事实/推演数量、来源覆盖、Verifier 检查数量与违规数、Multi-Agent 或 fallback 路径、Bull/Bear 状态与耗时，并公开安全回退原因；README 明确产品壁垒是可验证、可追溯、可回放的研究证据链，而非单纯增加 Agent 数量。
+- 验证结果：`npm run typecheck`、`npm test`（9 个常规文件、90 项测试，2 项跳过）、`npm run build` 和 `git diff --check` 通过；`npx eslint src/routes/research.tsx` 仍受该页面既有格式与 `any` 规则积压影响，未将其作为本次功能失败依据。
+
 ## 2026-09-19
+
+### 2026-09-20：修复指数看板空值被隐藏的问题
+
+- 修改范围：`src/components/GlobalIndexGlobe.tsx`、`src/routes/markets.index.tsx`、`src/lib/market-api.server.ts`、`docs/change-log.md`。
+- 具体变更点：核心指数列表不再过滤掉 `changePct = null` 的标的；价格和涨跌幅无数据时统一显示灰色“暂无数据”，卡片补充说明缺少上一交易日比较值的原因，避免空白被误解为组件漏渲染或零涨跌；全空行情响应不再写入 10 分钟缓存，避免数据源恢复后继续显示空板块。
+- 验证结果：组件定向 ESLint、`npm run typecheck` 和 `npm run build` 均通过；未对缺失数据编造价格或涨跌幅。
+
+### 2026-09-20：补充全球指数地球仪的七大洲陆地层
+
+- 修改范围：`src/components/GlobalIndexGlobe.tsx`、`docs/change-log.md`。
+- 具体变更点：将原先仅由少量点阵 `LAND` 组成的地表替换为七大洲简化海岸线多边形；增加半透明陆地填充、绿色边界描边和可见面大洲名称标注，并继续保留经纬网、指数定位点、涨跌标签和背面遮挡。
+- 验证结果：组件定向 ESLint、`npm run typecheck` 和 `npm run build` 均通过；未改变行情数据、指数位置或涨跌语义。
+
+### 2026-09-20：整理当前架构到 README
+
+- 修改范围：`README.md`、`docs/change-log.md`。
+- 具体变更点：新增项目定位、技术栈、线上请求路径 Mermaid 架构图、Harness/评测流程图、当前冻结样本与结果、开发验证命令，以及将未完成能力明确归类为后续展望。
+- 验证结果：已完成 Markdown 结构检查与 `git diff --check`；README 未改变运行时代码。
+
+### 2026-09-20 03:10 CST：更新 Multi-Agent MVP 路演 PPT，未完成项改为后续展望
+
+- 修改范围：`scripts/create_multi_agent_pitch_deck.mjs`、`docs/change-log.md`；项目外同步更新 `/Users/farnlyluo/Documents/helix trading-presentation/helix_multi_agent_pitch_deck.pptx` 与 `pitch-talk-track.md`。
+- 具体变更点：在 Harness 页更新为 90 项测试；在应用工作流页加入 AAPL/CRWV/ZZZZZZ 冻结样本、事实接地率与空值陷阱结果；明确写出当前样本不能证明 Multi-Agent 优于单模型；将 Golden Dataset 扩充、CI 回归、semantic Judge、earnings 多 Agent 和宏观四阶段流水线统一改写为“后续展望”，不再作为已完成能力呈现。讲解稿同步更新当前证据、延迟边界和展望顺序。
+- 验证结果：重新生成 3 页 PPTX；压缩包完整性检查通过，页面尺寸与布局几何检查通过（无发现重叠、标题适配或尺寸问题）。本机未安装 LibreOffice，未执行 PDF/PNG 渲染检查；脚本生成的 XML 保持可编辑文本、形状和连接线。
 
 ### 2026-09-19 12:03 PDT：补齐总览页宏观简报入口
 

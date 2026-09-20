@@ -48,7 +48,7 @@ function header(kicker, title, sub) {
 }
 
 function slide1() {
-  let b = header('01 / Multi-Agent', 'Fundamentals 已形成可回退、可验证的 Multi-Agent 路径', '先冻结事实，再并行生成 Bull / Bear，Synthesizer 经过事实校验重试；失败时回到单模型路径。');
+  let b = header('01 / Multi-Agent', 'Fundamentals 已形成可回退、可验证的 Multi-Agent 路径', '先冻结事实，再并行生成 Bull / Bear；Synthesizer 经过事实校验重试，失败时回到单模型路径。');
   const y = 245, h = 104;
   const boxes = [
     [68, '事实数据', '获取并冻结\n行情与基本面事实', C.blue],
@@ -96,12 +96,13 @@ function slide2() {
   }
   b += rect(68, 565, 1144, 72, '0E2330', { line: C.teal, lineWidth: 1.5 });
   b += tx(92, 578, 320, 30, '最小工程闭环', 18, C.teal, { bold: true });
-  b += tx(360, 578, 820, 30, 'npm run verify ＝ Harness lint → typecheck → 87 tests 通过（8 文件，2 个可选用例默认跳过）', 17, C.text, { bold: true });
+  b += tx(360, 578, 820, 30, 'npm run verify ＝ lint → typecheck → 90 tests 通过（9 文件，2 个在线用例默认跳过）', 17, C.text, { bold: true });
+  b += tx(92, 648, 1080, 24, '评测边界：AAPL / CRWV 同快照对照；数字与日期接地率、空值陷阱、Bull / Bear trace 均可复核。当前样本不证明多 Agent 优于单模型。', 13, C.muted);
   return slideXml(b);
 }
 
 function slide3() {
-  let b = header('03 / Application workflow', 'Multi-Agent 已嵌入真实的研究工作流', '入口统一，按研究模块选择策略；fundamentals 使用 Multi-Agent，其他模块保留单模型路径。行情展示同时区分上涨、下跌和暂无数据。');
+  let b = header('03 / Application workflow', 'Multi-Agent 已嵌入真实的研究工作流', 'fundamentals 使用 Multi-Agent，其他研究模块保留单模型路径；下方同时标出当前证据与后续展望。');
   const nodes = [
     [68, '输入股票代码', '用户输入\nTSLA / AAPL / ...', C.blue],
     [262, '解析与验证', '标准化 symbol\n检查可研究性', C.teal],
@@ -118,11 +119,12 @@ function slide3() {
   }
   for (let i=0;i<nodes.length-1;i++) b += line(nodes[i][0]+160, y+60, nodes[i+1][0], y+60, C.teal, 2);
   b += tx(68, 202, 1140, 24, '一条入口，多条研究策略', 17, C.teal, { bold: true });
-  b += rect(68, 430, 1144, 142, C.panel2, { line: C.line, lineWidth: 1 });
-  b += tx(92, 452, 260, 24, '生产链路', 16, C.teal, { bold: true });
-  b += tx(92, 490, 760, 55, '统一事实输入 → Bull / Bear → Synthesizer → Verifier → fallback\n结果带有 _debate trace；行情层明确区分上涨、下跌与暂无数据。', 18, C.text);
-  b += tx(930, 452, 250, 24, '离线评测', 14, C.muted, { align: 'r' });
-  b += tx(930, 488, 250, 52, 'golden fixture\n同快照 baseline / debate', 17, C.green, { bold: true, align: 'r' });
+  b += rect(68, 430, 548, 164, C.panel2, { line: C.teal, lineWidth: 1 });
+  b += tx(92, 452, 240, 24, '当前证据', 16, C.teal, { bold: true });
+  b += tx(92, 490, 490, 82, 'golden fixture：AAPL / CRWV / ZZZZZZ\n10/10、8/8 与 1/1、2/2 事实声明有据\n空值陷阱未被编造，结果可从原始输出重算', 16, C.text);
+  b += rect(664, 430, 548, 164, C.panel2, { line: C.orange, lineWidth: 1 });
+  b += tx(688, 452, 240, 24, '后续展望', 16, C.orange, { bold: true });
+  b += tx(688, 490, 490, 82, '扩充 Golden Dataset 与 CI 回归门禁\n补 semantic Judge，再评估 earnings 多 Agent\n宏观四阶段流水线列为 Phase 3，不纳入当前 MVP', 16, C.text);
   return slideXml(b);
 }
 

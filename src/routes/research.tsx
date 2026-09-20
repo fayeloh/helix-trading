@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Search, Sparkles } from "lucide-react";
+import { Database, GitBranch, Search, ShieldCheck, Sparkles, Timer } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -200,6 +200,7 @@ function ResearchPage() {
                   </div>
                 ) : current ? (
                   <div className="space-y-4">
+                    <ResearchTrustPanel payload={current.payload} />
                     <SectionBody section={s.key} payload={current.payload as never} />
                     <p className="text-[11px] text-muted-foreground">
                       {t("research.meta", {
@@ -226,6 +227,130 @@ function ResearchPage() {
 
 type Claim = { text: string; kind: string; source: string | null; as_of: string | null; confidence: string | null };
 type Share = { name: string; revenue_share_pct: number | null; note?: string; kind: string; source: string | null; as_of: string | null };
+
+type TrustMetrics = {
+  facts: number;
+  inferences: number;
+  sources: string[];
+};
+
+function collectTrustMetrics(value: unknown): TrustMetrics {
+  const metrics: TrustMetrics = { facts: 0, inferences: 0, sources: [] };
+  const sources = new Set<string>();
+
+  const visit = (node: unknown, key = "") => {
+    if (key === "_facts" || key === "_debate") return;
+    if (Array.isArray(node)) {
+      node.forEach((item) => visit(item));
+      return;
+    }
+    if (!node || typeof node !== "object") return;
+    const record = node as Record<string, unknown>;
+    if (record["kind"] === "fact") metrics.facts += 1;
+    if (record["kind"] === "inference") metrics.inferences += 1;
+    if (typeof record["source"] === "string" && record["source"].trim()) {
+      sources.add(record["source"].trim());
+    }
+    Object.entries(record).forEach(([childKey, child]) => visit(child, childKey));
+  };
+
+  visit(value);
+  metrics.sources = [...sources];
+  return metrics;
+}
+
+function ResearchTrustPanel({ payload }: { payload: unknown }) {
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) return null;
+  const p = payload as Record<string, any>;
+  const trace = p["_debate"] as Record<string, any> | undefined;
+  const verifier = trace?.["verifier_result"] as Record<string, any> | undefined;
+  const metrics = collectTrustMetrics(payload);
+  const bull = trace?.["agents"]?.["bull"];
+  const bear = trace?.["agents"]?.["bear"];
+  const architecture = trace?.["architecture"];
+  const fallback = architecture === "single-call-fallback";
+  const verified = verifier?.["passed"] === true;
+
+  return (
+    <Card className="border-primary/30 bg-primary/[0.03]">
+      <CardHeader className="pb-3">
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <div>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <ShieldCheck className="size-4 text-primary" />
+              研究可信度
+            </CardTitle>
+            <CardDescription className="mt-1 text-xs">
+              结论、来源和 Agent 执行状态均随报告保存，可复核、可回放。
+            </CardDescription>
+          </div>
+          <Badge variant="outline" className={verified ? "border-bull/40 text-bull" : ""}>
+            {verifier ? (verified ? "事实校验通过" : "事实校验未通过") : "确定性数据已附带"}
+          </Badge>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="rounded-md border border-border/70 p-3">
+            <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+              <Database className="size-3.5" /> 证据覆盖
+            </div>
+            <p className="mt-1 tabular text-sm font-semibold">
+              {metrics.facts} 项事实 · {metrics.inferences} 项推演
+            </p>
+            <p className="mt-1 text-[10px] text-muted-foreground">
+              {metrics.sources.length} 个已标注来源
+            </p>
+          </div>
+          <div className="rounded-md border border-border/70 p-3">
+            <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+              <ShieldCheck className="size-3.5" /> 程序校验
+            </div>
+            <p className="mt-1 tabular text-sm font-semibold">
+              {verifier ? `${verifier["checked_values"] ?? 0} 个数字/日期` : "本模块未启用 Verifier"}
+            </p>
+            <p className="mt-1 text-[10px] text-muted-foreground">
+              {verifier ? `${verifier["violations"]?.length ?? 0} 个未接地值` : "保留事实与推演标签"}
+            </p>
+          </div>
+          <div className="rounded-md border border-border/70 p-3">
+            <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+              <GitBranch className="size-3.5" /> 研究路径
+            </div>
+            <p className="mt-1 text-sm font-semibold">
+              {architecture ? (fallback ? "单模型安全回退" : "Bull / Bear 多 Agent") : "确定性数据 + AI 解读"}
+            </p>
+            <p className="mt-1 text-[10px] text-muted-foreground">
+              {fallback ? "部分 Agent 失败，已保留可用输出" : trace ? "双视角完成后综合" : "缺失字段保持为空"}
+            </p>
+          </div>
+          <div className="rounded-md border border-border/70 p-3">
+            <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+              <Timer className="size-3.5" /> Agent 状态
+            </div>
+            <p className="mt-1 tabular text-sm font-semibold">
+              {trace ? `Bull ${bull?.status ?? "—"} · Bear ${bear?.status ?? "—"}` : "无需并行 Agent"}
+            </p>
+            <p className="mt-1 tabular text-[10px] text-muted-foreground">
+              {trace ? `${bull?.duration_ms ?? 0}ms / ${bear?.duration_ms ?? 0}ms` : "报告保留生成时间与模型"}
+            </p>
+          </div>
+        </div>
+        {metrics.sources.length > 0 ? (
+          <p className="mt-3 text-[10px] leading-relaxed text-muted-foreground">
+            来源：{metrics.sources.slice(0, 6).join("、")}
+            {metrics.sources.length > 6 ? ` 等 ${metrics.sources.length} 个` : ""}
+          </p>
+        ) : null}
+        {trace?.["fallback_reason"] ? (
+          <p className="mt-2 rounded bg-warn/10 px-2 py-1.5 text-[10px] text-warn">
+            回退原因：{trace["fallback_reason"]}
+          </p>
+        ) : null}
+      </CardContent>
+    </Card>
+  );
+}
 
 function arr<T>(v: unknown): T[] {
   if (Array.isArray(v)) return v as T[];

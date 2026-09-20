@@ -41,7 +41,13 @@ export async function getIndexBoardData(
   const list: BoardDef[] = defs && defs.length > 0 ? defs : INDEX_BOARD;
   const cacheKey = `index_board_v4_${hashKey(list)}`;
   const cached = await readCache<IndexBoard>(cacheKey);
-  if (cached) return cached;
+  // Do not let an all-empty provider response become the page's 10-minute
+  // cache. It hides a later provider recovery and makes the board look broken.
+  if (
+    cached &&
+    cached.rows.some((row) => row.days.length > 0 || row.price != null)
+  )
+    return cached;
 
   const rows = await Promise.all(
     list.map(async (def): Promise<IndexRow> => {
@@ -79,7 +85,7 @@ export async function getIndexBoardData(
   }
 
   const board: IndexBoard = { rows, fetchedAt: new Date().toISOString() };
-  await writeCache(cacheKey, board, 600);
+  if (hasUsableRows) await writeCache(cacheKey, board, 600);
   return board;
 }
 

@@ -204,6 +204,12 @@ function MarketsPage() {
                       </div>
                     )}
 
+                    {!row.error && latest?.changePct == null ? (
+                      <p className="text-[11px] text-muted-foreground">
+                        当前数据源未返回可比较的上一交易日，涨跌幅显示为暂无数据。
+                      </p>
+                    ) : null}
+
                     <div className="rounded-md bg-muted/40 p-2.5">
                       {attributions.isLoading ? (
                         <Skeleton className="h-8 w-full" />
