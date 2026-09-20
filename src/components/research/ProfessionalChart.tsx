@@ -99,6 +99,7 @@ export function ProfessionalChart({
   const span = Math.max(domainMax - domainMin, 1);
   const ma5 = useMemo(() => movingAverage(candles, 5), [candles]);
   const ma20 = useMemo(() => movingAverage(candles, 20), [candles]);
+  const closeLine = useMemo(() => candles.map((candle) => candle.c), [candles]);
 
   useEffect(() => {
     try {
@@ -216,7 +217,8 @@ export function ProfessionalChart({
               </span>
             </div>
             <p className="mt-1 text-[11px] text-muted-foreground">
-              行情每 60 秒刷新；数据源可能延迟。画线自动保存在本机浏览器。
+              行情每 60 秒刷新；数据源可能延迟。当前共 {candles.length} 根 K
+              线，白线为收盘价走势。画线自动保存在本机浏览器。
             </p>
           </div>
           <div className="flex items-center gap-1">
@@ -426,6 +428,29 @@ export function ProfessionalChart({
                 </g>
               );
             })}
+
+            <path
+              d={pathFor(closeLine)}
+              fill="none"
+              stroke="#f4f7f8"
+              strokeWidth={candles.length <= 5 ? 3 : 1.8}
+              strokeLinejoin="round"
+              strokeLinecap="round"
+              opacity="0.95"
+            />
+            {candles.length <= 12
+              ? candles.map((candle, index) => (
+                  <circle
+                    key={`close-${candle.t}`}
+                    cx={xFor(index)}
+                    cy={yFor(candle.c)}
+                    r={candles.length <= 5 ? 4 : 2.5}
+                    fill="#f4f7f8"
+                    stroke="#090d10"
+                    strokeWidth="1.5"
+                  />
+                ))
+              : null}
 
             {showMa5 ? (
               <path

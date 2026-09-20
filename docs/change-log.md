@@ -1,5 +1,29 @@
 # 项目变更记录
 
+### 2026-09-20：新增 Helix Trading 商业计划书初稿
+
+- 修改范围：`docs/helix-trading-business-plan.md`、`docs/change-log.md`。
+- 具体变更点：基于 Helix Trading 当前 MVP、产品规格、Multi-Agent Harness 评测摘要、演示分镜，以及用户提供的“高效能系统”中的能力与方法论资料，新增一份中文商业计划书初稿，覆盖项目定位、用户痛点、产品方案、竞争壁垒、目标客户、商业模式、增长策略、路线图、关键指标、融资资源需求、风险与待验证材料；对尚未有真实数据支撑的市场规模、收入、客户和投资效果明确标注为假设或待验证。
+- 验证结果：完成 Markdown 结构检查；内容中的产品能力与当前项目 README、`docs/mvp-eval-summary.md`、`docs/helix-trading-90s-demo-storyboard.md` 的已知边界保持一致，未执行运行时代码测试。
+
+### 2026-09-20：提取原视频人声素材
+
+- 修改范围：`voiceover_work/original-voice.wav`、`docs/change-log.md`。
+- 具体变更点：从 `/Users/farnlyluo/Downloads/志在夺冠队 helix-trading 项目.mov` 提取 AAC 原声，转换为 44.1 kHz、单声道 PCM WAV，供后续口播稿融合、字幕识别和音色复刻使用。
+- 验证结果：`ffprobe` 确认音频时长约 316.53 秒、采样率 44.1 kHz、单声道，文件可正常读取。
+
+### 2026-09-20：移除全球指数地球仪表面波浪线
+
+- 修改范围：`src/components/GlobalIndexGlobe.tsx`、`docs/change-log.md`。
+- 具体变更点：移除地球表面的程序化波浪云纹，减少地图主体的视觉干扰；保留球体光照、昼夜分界、城市灯光、经纬网、板块边界和指数数据连线。
+- 验证结果：执行 `npm run typecheck` 与 `git diff --check`。
+
+### 2026-09-20：为全球指数地球仪增加上下转动姿态
+
+- 修改范围：`src/components/GlobalIndexGlobe.tsx`、`docs/change-log.md`。
+- 具体变更点：将经纬度投影升级为带俯仰角的球面旋转投影；支持鼠标与触控上下拖动改变视角，左右拖动继续改变经度，并对俯仰角设置安全范围避免倒置；同步更新交互提示。
+- 验证结果：执行 `npm run typecheck` 与 `git diff --check`。
+
 ### 2026-09-20：增强 3D 地球仪板块分界
 
 - 修改范围：`src/components/GlobalIndexGlobe.tsx`、`docs/change-log.md`。
@@ -13,6 +37,18 @@
 - 验证结果：定向 ESLint、`npm run typecheck`、symbol-resolver 4 项测试和 `git diff --check` 通过；生产构建此前已通过，本次未改变构建逻辑。
 
 本文件按时间点记录项目中所有文件修改。只要修改项目文件，都必须在变更发生时追加记录。
+
+### 2026-09-19：补齐全球指数看板离线行情回退
+
+- 修改范围：`src/lib/market-seed.ts`、`docs/change-log.md`。
+- 具体变更点：写入用户提供的 `^RUT`、`^HSI`、`^N225`、`^GDAXI`、`BTC-USD`、`ETH-USD`、`GC=F`、`SI=F`、`CL=F`、`DX-Y.NYB` 共 10 个标的历史快照；实时行情源和数据库历史缓存仍优先，全部不可用时才使用内置 seed。
+- 验证结果：`npx prettier --write src/lib/market-seed.ts`、`npx eslint src/lib/market-seed.ts`、`npm run typecheck`、`npm run build`、`git diff --check` 均通过；未执行线上部署或登录后的页面验证。
+
+### 2026-09-19：强化全球指数地球仪的赛博点云效果
+
+- 修改范围：`src/components/GlobalIndexGlobe.tsx`、`docs/change-log.md`。
+- 具体变更点：移除球体外围大气光晕和各大陆板块轮廓边界；将陆地点阵采样间隔由约 `2.25° × 2.7°` 提高至 `1.35° × 1.65°`，缩小单点并混入少量青色数据点，使大陆由更密集的绿青双色数据点构成，同时保留动态扫描、轨道与行情脉冲。
+- 验证结果：`npm run typecheck` 通过；`git diff --check` 通过。
 
 ### 2026-09-19：研究页图表调整为并列 Tab 并更新筛选粒度
 
@@ -308,3 +344,13 @@
 - 修改范围：`src/routes/research.tsx`、`docs/change-log.md`。
 - 具体变更点：提交标的后并行请求基本面、财报、周期、资金流四个研究模块；各模块结果独立写入本地状态，切换标签页时无需再次等待；生成中禁用重复操作，并对部分模块失败给出提示。
 - 验证结果：`npm run typecheck` 通过，`git diff --check` 通过；只读核对 Supabase 现有报告确认基本面/财报/资金流已有真实数据，周期模块的空值主要来自事件与月线数据源缺失。
+### 2026-09-20：升级全球指数 3D 地球仪视觉
+
+- 修改范围：`src/components/GlobalIndexGlobe.tsx`、`src/styles.css`、`docs/change-log.md`。
+- 具体变更点：为 Canvas 地球仪增加深海球体材质与太阳反射、昼夜分界、程序化夜间城市灯光、动态云层纹理和更强的大气边缘辉光；保留拖拽旋转、自动旋转、指数脉冲标记及无障碍减弱动画逻辑。
+- 验证结果：已完成 TypeScript 级别代码检查准备，执行 `npm run typecheck` 与 `git diff --check`。
+### 2026-09-20：让标的研究图表明确显示收盘价折线
+
+- 修改范围：`src/components/research/ProfessionalChart.tsx`、`docs/change-log.md`。
+- 具体变更点：在 K 线图上叠加白色收盘价折线，少量数据时标出收盘点，并显示当前 K 线数量，避免离线回退仅有两根数据时看起来像空图。
+- 验证结果：只读核对行情缓存发现 `BTC-USD` 有 350 根 Coinbase K 线，`SOXX` 离线回退仅 2 根；`npm run typecheck` 与 `git diff --check` 通过。

@@ -200,13 +200,13 @@ const pointInContinent = (
 // look as the reference video without shipping a large texture or map runtime.
 const LAND_DOTS = CONTINENTS.flatMap((continent, continentIndex) => {
   const dots: { lat: number; lon: number; seed: number }[] = [];
-  for (let lat = -84; lat <= 78; lat += 2.25) {
-    for (let lon = -177; lon <= 177; lon += 2.7) {
+  for (let lat = -84; lat <= 78; lat += 1.35) {
+    for (let lon = -177; lon <= 177; lon += 1.65) {
       const seed = Math.abs(
         Math.sin(lat * 12.9898 + lon * 78.233 + continentIndex * 17.17),
       );
-      const jitterLat = (seed - 0.5) * 1.35;
-      const jitterLon = (Math.abs(Math.sin(seed * 43758.5453)) - 0.5) * 1.6;
+      const jitterLat = (seed - 0.5) * 0.82;
+      const jitterLon = (Math.abs(Math.sin(seed * 43758.5453)) - 0.5) * 0.96;
       if (
         pointInContinent(lat + jitterLat, lon + jitterLon, continent.points)
       ) {
@@ -271,6 +271,14 @@ const HUB_LINKS: readonly [number, number][] = [
   [2, 6],
 ];
 
+// Sparse, deterministic city-light points keep the night side alive without
+// shipping a multi-megabyte earth texture.
+const CITY_LIGHTS = Array.from({ length: 115 }, (_, i) => ({
+  lat: -52 + ((i * 37) % 104) + Math.sin(i * 1.7) * 5,
+  lon: -178 + ((i * 83) % 356) + Math.cos(i * 2.1) * 5,
+  size: 0.35 + (i % 4) * 0.16,
+}));
+
 function RotatingGlobe({ rows }: { rows: GlobeRow[] }) {
   const canvasRef = useRef<HTMLCanvasElement>(null),
     wrapRef = useRef<HTMLDivElement>(null),
@@ -284,10 +292,12 @@ function RotatingGlobe({ rows }: { rows: GlobeRow[] }) {
     if (!ctx) return;
     let frame = 0,
       rotation = -2.1,
+      tilt = 0.14,
       last = performance.now(),
       autoRotate = true,
       dragging = false,
       dragX = 0,
+      dragY = 0,
       pointerInside = false,
       resumeTimer: ReturnType<typeof setTimeout> | undefined;
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -311,11 +321,18 @@ function RotatingGlobe({ rows }: { rows: GlobeRow[] }) {
       r: number,
     ) => {
       const p = (lat * Math.PI) / 180,
-        t = (lon * Math.PI) / 180 + rotation;
+        t = (lon * Math.PI) / 180 + rotation,
+        rawX = Math.cos(p) * Math.sin(t),
+        rawY = Math.sin(p),
+        rawZ = Math.cos(p) * Math.cos(t),
+        cosTilt = Math.cos(tilt),
+        sinTilt = Math.sin(tilt),
+        y = rawY * cosTilt - rawZ * sinTilt,
+        z = rawY * sinTilt + rawZ * cosTilt;
       return {
-        x: cx + r * Math.cos(p) * Math.sin(t),
-        y: cy - r * Math.sin(p),
-        z: Math.cos(p) * Math.cos(t),
+        x: cx + r * rawX,
+        y: cy - r * y,
+        z,
       };
     };
     const draw = (now: number) => {
@@ -353,23 +370,6 @@ function RotatingGlobe({ rows }: { rows: GlobeRow[] }) {
       ctx.beginPath();
       ctx.arc(cx, cy, r * 1.14, 0, Math.PI * 2);
       ctx.fill();
-      const atmosphere = ctx.createRadialGradient(
-        cx,
-        cy,
-        r * 0.82,
-        cx,
-        cy,
-        r * 1.12,
-      );
-      atmosphere.addColorStop(0, "rgba(29,255,151,0)");
-      atmosphere.addColorStop(0.72, "rgba(29,255,151,.025)");
-      atmosphere.addColorStop(0.9, "rgba(64,255,182,.23)");
-      atmosphere.addColorStop(0.94, "rgba(70,236,188,.08)");
-      atmosphere.addColorStop(1, "rgba(54,213,193,0)");
-      ctx.fillStyle = atmosphere;
-      ctx.beginPath();
-      ctx.arc(cx, cy, r * 1.12, 0, Math.PI * 2);
-      ctx.fill();
       ctx.save();
       ctx.setLineDash([2, 7]);
       ctx.lineDashOffset = reducedMotion.matches ? 0 : -now * 0.008;
@@ -388,6 +388,54 @@ function RotatingGlobe({ rows }: { rows: GlobeRow[] }) {
       ctx.beginPath();
       ctx.arc(cx, cy, r, 0, Math.PI * 2);
       ctx.clip();
+      // Deep ocean base + soft solar reflection: this gives the mesh a
+      // spherical material response instead of a flat map-on-black look.
+      const ocean = ctx.createRadialGradient(
+        cx - r * 0.32,
+        cy - r * 0.38,
+        r * 0.08,
+        cx + r * 0.12,
+        cy + r * 0.08,
+        r * 1.05,
+      );
+      ocean.addColorStop(0, "rgba(31,105,118,.78)");
+      ocean.addColorStop(0.34, "rgba(10,57,76,.88)");
+      ocean.addColorStop(0.72, "rgba(4,27,43,.96)");
+      ocean.addColorStop(1, "rgba(1,12,23,1)");
+      ctx.fillStyle = ocean;
+      ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
+      const sunGlint = ctx.createRadialGradient(
+        cx - r * 0.38,
+        cy - r * 0.42,
+        0,
+        cx - r * 0.38,
+        cy - r * 0.42,
+        r * 0.92,
+      );
+      sunGlint.addColorStop(0, "rgba(144,255,230,.16)");
+      sunGlint.addColorStop(0.3, "rgba(71,207,225,.08)");
+      sunGlint.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = sunGlint;
+      ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
+      // A moving terminator makes the illuminated hemisphere read instantly.
+      const terminator = ctx.createLinearGradient(cx - r, 0, cx + r, 0);
+      terminator.addColorStop(0, "rgba(1,7,17,.68)");
+      terminator.addColorStop(0.44, "rgba(1,9,18,.18)");
+      terminator.addColorStop(0.62, "rgba(8,56,72,0)");
+      terminator.addColorStop(1, "rgba(0,0,0,.12)");
+      ctx.fillStyle = terminator;
+      ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
+      // Night-side city glow, intentionally sparse and warm against the cyan
+      // data mesh so the globe feels inhabited rather than decorative.
+      for (const city of CITY_LIGHTS) {
+        const p = project(city.lat, city.lon, cx, cy, r * 0.997);
+        if (p.z > 0.12) continue;
+        const glow = Math.min(0.75, (0.12 - p.z) * 1.3 + 0.18);
+        ctx.fillStyle = `rgba(255,196,102,${glow})`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, city.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
       for (let lat = -75; lat <= 75; lat += 15) {
         ctx.beginPath();
         let s = false;
@@ -431,53 +479,17 @@ function RotatingGlobe({ rows }: { rows: GlobeRow[] }) {
           ? 0.8
           : 0.72 + Math.sin(now * 0.0018 + dot.seed * 35) * 0.18;
         const alpha = Math.min(
-          0.92,
-          (0.16 + p.z * 0.36 + edgeGlow * 0.38) * twinkle,
+          0.94,
+          (0.22 + p.z * 0.38 + edgeGlow * 0.28) * twinkle,
         );
-        const radius = 0.42 + edgeGlow * 0.72 + dot.seed * 0.22;
-        ctx.fillStyle = `rgba(91,255,183,${alpha})`;
+        const radius = 0.34 + edgeGlow * 0.46 + dot.seed * 0.18;
+        const cyanMix = dot.seed > 0.76;
+        ctx.fillStyle = cyanMix
+          ? `rgba(65,221,255,${alpha * 0.8})`
+          : `rgba(91,255,183,${alpha})`;
         ctx.beginPath();
         ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
         ctx.fill();
-      }
-      // Keep continent boundaries legible above the point cloud.
-      for (const continent of CONTINENTS) {
-        const drawBoundary = (strokeStyle: string, lineWidth: number) => {
-          ctx.beginPath();
-          let drawing = false;
-          for (let i = 0; i <= continent.points.length; i++) {
-            const [latA, lonA] = continent.points[i % continent.points.length]!;
-            const [latB, lonB] =
-              continent.points[(i + 1) % continent.points.length]!;
-            const steps = Math.max(
-              1,
-              Math.ceil(Math.hypot(latB - latA, lonB - lonA) / 5),
-            );
-            for (let step = 0; step <= steps; step++) {
-              const t = step / steps;
-              const p = project(
-                latA + (latB - latA) * t,
-                lonA + (lonB - lonA) * t,
-                cx,
-                cy,
-                r * 1.002,
-              );
-              if (p.z < 0.02) {
-                drawing = false;
-                continue;
-              }
-              if (!drawing) {
-                ctx.moveTo(p.x, p.y);
-                drawing = true;
-              } else ctx.lineTo(p.x, p.y);
-            }
-          }
-          ctx.strokeStyle = strokeStyle;
-          ctx.lineWidth = lineWidth;
-          ctx.stroke();
-        };
-        drawBoundary("rgba(77,255,181,.16)", 3.4);
-        drawBoundary("rgba(134,255,207,.78)", 1.05);
       }
       ctx.restore();
       // Financial hub arcs sit above the globe surface and fade on the far side.
@@ -571,6 +583,7 @@ function RotatingGlobe({ rows }: { rows: GlobeRow[] }) {
       dragging = true;
       autoRotate = false;
       dragX = event.clientX;
+      dragY = event.clientY;
       canvas.setPointerCapture(event.pointerId);
       canvas.style.cursor = "grabbing";
       if (resumeTimer) clearTimeout(resumeTimer);
@@ -578,7 +591,12 @@ function RotatingGlobe({ rows }: { rows: GlobeRow[] }) {
     const onPointerMove = (event: PointerEvent) => {
       if (!dragging) return;
       rotation += (event.clientX - dragX) * 0.006;
+      // Vertical dragging changes the globe's actual camera pitch, so the
+      // poles and latitude grid move in perspective instead of sliding as a
+      // flat image. Clamp before the globe flips upside down.
+      tilt = Math.max(-1.05, Math.min(1.05, tilt + (event.clientY - dragY) * 0.006));
       dragX = event.clientX;
+      dragY = event.clientY;
     };
     const onPointerUp = () => {
       dragging = false;
@@ -644,7 +662,7 @@ function RotatingGlobe({ rows }: { rows: GlobeRow[] }) {
         SYS // INDEX_NET <span className="helix-live-dot">●</span> LIVE
       </div>
       <div className="pointer-events-none absolute bottom-3 left-3 text-[10px] text-[#6d8991]">
-        DRAG TO ROTATE · AUTO-PILOT · 60S REFRESH
+        DRAG TO ROTATE · UP/DOWN TILT · AUTO-PILOT · 60S REFRESH
       </div>
       <div className="pointer-events-none absolute bottom-3 right-3 font-mono text-[9px] tracking-[.12em] text-[#3fd8ff]/60">
         LAT/LNG GRID // HUB LINK ONLINE
